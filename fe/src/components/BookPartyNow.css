@@ -1,0 +1,63 @@
+.book-party-wrapper {
+  padding: 50px 0;
+}
+
+
+
+.form-container {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  width: 80%; /* Change from 80% to full width */
+  max-width: 500px; /* Optional: limit form width on desktop */
+  margin: 0 auto; /* Center the form */
+}
+
+.custom-input {
+  background-color: #ffc0cb !important;
+  border-color: #ffc0cb !important;
+  font-weight: bold !important;
+  color: #000 !important;
+}
+
+.vertical-divider {
+  width: 2px;
+  height: 100%;
+  background-color: #ccc;
+  margin: auto;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.info-text {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+/* Mobile fixes */
+@media (max-width: 767px) {
+  .book-party-wrapper {
+    padding: 30px 16px; /* Reduce side padding */
+  }
+
+  .info-item {
+    align-items: center;
+    padding-left: 5%;
+  }
+
+  .info-icon {
+    margin-bottom: 8px;
+  }
+
+ 
+}

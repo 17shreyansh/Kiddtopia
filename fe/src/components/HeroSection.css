@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Rowdies:wght@300;400;700&display=swap');
+
+.hero-section {
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: calc(100vh - 64px);
+  margin-top: 64px;
+  color: black;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-overlay {
+  width: 100%;
+  padding: 0 16px;
+  
+}
+
+.hero-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  
+}
+
+.hero-services {
+  font-family: 'Poppins', sans-serif;
+  font-size: 25px;
+  font-weight: 500;
+  color: #000;
+  text-align: center;
+  margin: 0;  
+  
+  
+}
+
+.hero-tags span {
+  color: #ff4d4f;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+}
+
+.box1 {
+  background-color: rgba(254, 207, 167, 0.46); 
+  padding: 10px 30px;
+  border-radius: 50px;
+  border: 1px solid #FF908F;
+  text-align: center;
+  width: fit-content;
+  margin: 20px auto;
+}
+
+.hero-title {
+  font-family: 'Rowdies', cursive;
+  font-size: 60px;
+  font-weight: 400;
+  color: #000;
+  margin-bottom: 10px;
+  margin-top: auto;
+}
+
+.hero-subtitle {
+
+ 
+  font-size: 17px;
+  text-align: left;
+  font-family: Poppins;
+}
+
+.hero-button {
+  margin: 10px 0 0 60px;
+}
+
+
+
+
+/* MOBILE (below 768px) */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 6vw;
+    text-align: end;
+  }
+
+  .hero-tags span {
+    font-size: 2.5vw;
+  }
+
+  .hero-section {
+    height: calc(100% - 56px); /* Adjust for navbar height */
+    
+    margin-top: 56px; /* assumes navbar is 56px tall */
+    padding-bottom: 25vw;
+    background-position: 20%;
+  }
+  
+  .hero-button{
+    display: none;
+  }
+
+  .box1 {
+    padding: 1.5vw 3vw;
+    margin-top: 4vw;
+    margin-bottom: 15vw;
+    
+    
+    
+  }
+
+  .hero-subtitle {
+    display: none;
+  }
+
+  .hero-services {
+    font-size: 3vw;
+  }
+
+  .hero-button {
+    margin: 2vw 0 0 0;
+    font-size: 3.5vw;
+    padding: 2.5vw 5vw;
+  }
+
+  .hero-review-box {
+    display: none ;
+  }
+}
+
+/* SMALL DEVICES (below 480px) */
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 7vw;
+  }
+
+  .hero-tags span {
+    font-size: 3vw;
+  }
+
+  .hero-services {
+    font-size: 4vw;
+  }
+
+  .hero-button {
+    font-size: 3.2vw;
+    padding: 2vw 4vw;
+  }
+}

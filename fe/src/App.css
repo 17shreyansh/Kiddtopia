@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Rowdies:wght@300;400;700&display=swap');
+*{
+    font-family: Rowdies;
+    
+}
+
+body{
+  background-color: #F8F1E3;
+}
+
+.btn {
+    background-color: #ffd133;
+    color: black;
+    font-weight: bold;
+    border: none;
+    border-radius: 20px;
+    width: 150px;
+    padding: 8px 20px;
+    text-align: center;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: Outfit;
+}
+
+.btn:hover {
+    background-color: black;
+    color: #ffd133;
+    cursor: pointer;
+    /* transform: scale(1.05); */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ant-select-selector {
+    background: none !important;
+  }
+
+.title {
+    color: #1B71C4;
+    font-weight: bold;
+    text-align: center;
+    font-family: Rowdies;
+    font-size: 40px;
+}
+
+.newsletter-section {
+  padding: 40px 20px;
+  background-color: #f8f1e3;
+  font-family: 'Poppins', sans-serif;
+}
+
+.promo-text {
+  color: #e60023;
+  font-size: 50px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.divider {
+  border-left: 1px dashed #999;
+  height: 100px;
+  margin: auto 0;
+  align-self: stretch;
+}
+
+.newsletter-sub {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #0066cc;
+  font-size: 25px;
+  text-align: center;
+}
+
+.newsletter-input {
+  background-color: #ffc0cb !important;
+  border-color: #ffc0cb !important;
+  font-weight: bold !important;
+  color: #000 !important;
+  border-radius: 10px !important;
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .promo-text {
+    font-size: 35px;
+  }
+
+
+
+  .divider {
+display: none;  }
+}
+
+.admin-layout * {
+  font-family: 'Segoe UI', sans-serif ; /* Or any other clean font you prefer */
+}
+
+  

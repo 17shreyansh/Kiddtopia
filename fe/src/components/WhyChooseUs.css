@@ -1,0 +1,121 @@
+.why-wrapper {
+    padding: 50px 20px;
+    text-align: center;
+    position: relative;
+  }
+  
+  .why-title {
+    color: #1B71C4 ;
+    font-weight: bold;
+    text-align: center;
+    font-family: 'Rowdies', sans-serif;
+    font-size: 40px;
+    margin-bottom: 40px;
+  }
+  
+  .butterfly-path-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    top: 30px;
+    margin: 0 auto; /* Center horizontally */
+    display: block;
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+  }
+  
+  .why-image-box {
+    position: relative;
+    transition: transform 0.3s ease;
+  }
+  
+.why-image1 {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Make it square */
+    border: 5px dashed #ccc;
+    padding: 5px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+.why-image2 {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Make it square */
+    border-radius: 100%; /* Slightly rounded corners */
+    object-fit: cover;
+    border: 5px dashed #ccc;
+    padding: 5px;
+
+
+}
+  .why-image3 {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Make it square */
+    border: 5px dashed #ccc;
+    padding: 5px;
+    border-radius: 12px;
+    object-fit: cover;
+  }
+  
+.why-image4 {
+  width: 100%;
+  height: 28vw;
+  border-radius: 150px; /* Change to slightly rounded corners */
+  border: 5px dashed #ccc;
+  padding: 5px;
+  object-fit: cover;
+
+}
+
+  
+  /* Butterfly path - placeholder for custom SVG/animation */
+  .butterfly-path-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* width: 100%; */
+    height: 100%;
+    /* background-image: url('../assets/butterfly-path.svg');  */
+    background-size: contain;
+    pointer-events: none;
+  }
+  
+  @media (max-width: 767px) {
+    .why-wrapper {
+      padding: 30px 10px;
+    }
+  
+    .why-title {
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+  
+    .butterfly-path-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      top: 10px;
+      width: 80vw;
+    }
+  
+    .why-image1,
+    .why-image2,
+    .why-image3,
+    .why-image4 {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      padding: 4px;
+      border: 4px dashed #ccc;
+      object-fit: cover;
+    }
+  
+    .why-image4 {
+      aspect-ratio: 3 / 2;
+      border-radius: 30px;
+      height: auto;
+    }
+  
+    .why-image-box {
+      transform: none;
+    }
+  }
+  
