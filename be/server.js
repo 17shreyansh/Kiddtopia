@@ -42,6 +42,10 @@ app.use('/api/home', homeRoutes);  // Ensure that 'homeRoutes' includes proper r
 app.use('/api/about', aboutUsRoutes);
 app.use('/api/parties', partiesPageRoutes);
 
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 
 
 // Test route to check if the file is being uploaded
