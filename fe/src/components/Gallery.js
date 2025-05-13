@@ -21,15 +21,22 @@ const Gallery = () => {
     const fetchImages = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/home/Gallery`);
-        if (response.data.success) {
-          setImages(response.data.content.images);
+        const imagesFromApi = response?.data?.content?.images;
+
+        if (Array.isArray(imagesFromApi)) {
+          setImages(imagesFromApi);
+        } else {
+          setImages([]); // fallback to prevent `.map()` errors
         }
       } catch (err) {
         console.error("Failed to load gallery images:", err);
+        setImages([]); // fallback in case of error
       }
     };
+
     fetchImages();
   }, []);
+
 
   const settings = {
     dots: false,
@@ -72,7 +79,7 @@ const Gallery = () => {
       </Title>
 
       <Slider {...settings}>
-        {images.map((img, idx) => (
+        {images?.map((img, idx) => (
           <div key={idx} style={{ padding: 10 }}>
             <div
               style={{
@@ -90,6 +97,7 @@ const Gallery = () => {
             </div>
           </div>
         ))}
+
       </Slider>
     </div>
   );

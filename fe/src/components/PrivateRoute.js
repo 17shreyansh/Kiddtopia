@@ -12,7 +12,7 @@ const PrivateRoute = () => {
       return;
     }
 
-    axios.get('http://localhost:5000/api/admin', {
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/admin`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
