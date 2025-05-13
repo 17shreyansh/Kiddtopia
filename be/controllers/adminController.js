@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 require('dotenv').config(); // Ensure this is at the top
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
+const Admin = require('../models/admin');
 
 // Preload admin credentials
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
