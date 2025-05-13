@@ -37,7 +37,7 @@ const Login = () => {
       if (!token) return;
   
       try {
-        await axios.get('http://localhost:5000/api/admin', {
+        await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/admin`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         navigate('/admin'); // Redirect if token is valid
