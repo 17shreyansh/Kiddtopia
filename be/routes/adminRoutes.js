@@ -15,4 +15,3 @@ router.get('/', protect, (req, res) => {
 });
 
 module.exports = router;
-  

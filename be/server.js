@@ -39,9 +39,8 @@ const upload = multer({ storage });
 // Routes
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/home', homeRoutes);  // Ensure that 'homeRoutes' includes proper routes for section management
-app.use('/api/abo ut', aboutUsRoutes);
+app.use('/api/about', aboutUsRoutes);
 app.use('/api/parties', partiesPageRoutes);
-
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
