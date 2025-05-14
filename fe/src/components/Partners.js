@@ -61,7 +61,7 @@ useEffect(() => {
           }}
         >
           <img
-            src={`http://localhost:5000/uploads/${logo}`}
+            src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${logo}`}
             alt={`Partner ${index + 1}`}
             style={{
               width: "100%",

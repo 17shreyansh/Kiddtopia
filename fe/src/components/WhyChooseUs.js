@@ -39,7 +39,7 @@ const WhyChooseUs = () => {
                 }}
               >
                 <img
-                  src={`http://localhost:5000/uploads/${img}`}
+                  src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${img}`}
                   alt={`why-${index + 1}`}
                   className={`why-image${index + 1}`}
                 />

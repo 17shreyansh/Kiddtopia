@@ -107,7 +107,7 @@ const About = () => {
 
   // Assuming the base URL for images should be the same as the backend URL
   const getImageUrl = (src) => {
-    const baseUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'; // Set your server base URL here
+    const baseUrl = process.env.REACT_APP_BACKEND_URL ; // Set your server base URL here
     return `${baseUrl}${src}`;
   };
 
