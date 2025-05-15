@@ -2,29 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-import Image from '../assets/sample.jpg'
-import './GalleryGrid.css'
+import './GalleryGrid.css';
 import { TopSection } from './About';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
-
-// Sample gallery items with higher resolution images
-const defaultGalleryItems = [
-  { id: 'item1', image: Image, title: 'Gallery Image 1' },
-  { id: 'item2', image: Image, title: 'Gallery Image 2' },
-  { id: 'item3', image: Image, title: 'Gallery Image 3' },
-  { id: 'item4', image: Image, title: 'Gallery Image 4' },
-  { id: 'item5', image: Image, title: 'Gallery Image 5' },
-  { id: 'item6', image: Image, title: 'Gallery Image 6' },
-  { id: 'item7', image: Image, title: 'Gallery Image 7' },
-  { id: 'item8', image: Image, title: 'Gallery Image 8' },
-  { id: 'item9', image: Image, title: 'Gallery Image 9' },
-  { id: 'item10', image: Image, title: 'Gallery Image 10' },
-  { id: 'item11', image: Image, title: 'Gallery Image 10' },
-  { id: 'item12', image: Image, title: 'Gallery Image 10' },
-
-
-];
 
 // Grid layout configuration
 const layouts = {
@@ -57,7 +38,7 @@ const layouts = {
     { i: 'item12', x: 0.75, y: 7,  w: 0.75, h: 3 },
   ],
   sm: [
-   { i: 'item1', x: 0, y: 0, w: 2, h: 3 },
+    { i: 'item1', x: 0, y: 0, w: 2, h: 3 },
     { i: 'item2', x: 0, y: 3, w: 2, h: 2 },
     { i: 'item3', x: 0, y: 5, w: 2, h: 3 },
     { i: 'item4', x: 0, y: 8, w: 1, h: 2 },
@@ -71,11 +52,6 @@ const layouts = {
     { i: 'item12', x: 1, y: 22, w: 1, h: 2 },
   ],
 };
-
-
-
-
-
 
 // ImageModal
 const ImageModal = ({ isOpen, image, title, onClose }) => {
@@ -94,12 +70,18 @@ const ImageModal = ({ isOpen, image, title, onClose }) => {
 // GalleryItem
 const GalleryItem = ({ item, onClick }) => {
   const [loading, setLoading] = useState(true);
+  
+  // Construct full image URL
+  const imageUrl = item.image.startsWith('http') 
+    ? item.image 
+    : `${process.env.REACT_APP_BACKEND_URL}/${item.image.startsWith('/') ? item.image.substring(1) : item.image}`;
+  
   return (
     <div className="gallery-item" onClick={() => onClick(item)}>
       {loading && <div className="loading-indicator">Loading...</div>}
       <div className="gallery-item-content">
         <img
-          src={item.image}
+          src={imageUrl}
           alt={item.title}
           onLoad={() => setLoading(false)}
           style={{ opacity: loading ? 0 : 1 }}
@@ -115,7 +97,12 @@ const GalleryGrid = ({ items }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const openModal = (item) => {
-    setSelectedImage(item);
+    // Construct full image URL for modal
+    const imageUrl = item.image.startsWith('http') 
+      ? item.image 
+      : `${process.env.REACT_APP_BACKEND_URL}/${item.image.startsWith('/') ? item.image.substring(1) : item.image}`;
+    
+    setSelectedImage({...item, image: imageUrl});
     setModalOpen(true);
   };
 
@@ -136,7 +123,7 @@ const GalleryGrid = ({ items }) => {
         isResizable={false}
       >
         {items.map((item) => (
-          <div key={item.id}>
+          <div key={item.itemId}>
             <GalleryItem item={item} onClick={openModal} />
           </div>
         ))}
@@ -153,20 +140,49 @@ const GalleryGrid = ({ items }) => {
 };
 
 // GalleryPage
-const GalleryPage = ({ items = defaultGalleryItems }) => {
+const GalleryPage = () => {
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchGalleryItems = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/gallery/`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Sort the items by order property
+        const sortedItems = data.sort((a, b) => a.order - b.order);
+        setGalleryItems(sortedItems);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching gallery items:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchGalleryItems();
+  }, []);
+
   return (
     <>
-          <TopSection heading={'Gallery'}/>
-
-    <div className="gallery-page">
-      <main>
-        <GalleryGrid items={items} />
-      </main>
-    </div>
+      <TopSection heading={'Gallery'} />
+      <div className="gallery-page">
+        <main>
+          {loading && <div className="loading-container">Loading gallery...</div>}
+          {error && <div className="error-container">Error loading gallery: {error}</div>}
+          {!loading && !error && galleryItems.length > 0 && <GalleryGrid items={galleryItems} />}
+          {!loading && !error && galleryItems.length === 0 && <div className="no-items">No gallery items found.</div>}
+        </main>
+      </div>
     </>
   );
 };
 
-export default GalleryPage
-
-
+export default GalleryPage;

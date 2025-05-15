@@ -23,6 +23,11 @@ import ContactSection from './pages/ContactUs';
 import Gallery from './pages/Gallery';
 import BlogPage from './pages/Blog';
 import AuthPage from './pages/CreateAccount';
+import ServiceEditPage from './admin/ServiceEditPage';
+import EditMembershipPlan from './admin/EditMembershipPlan';
+import GalleryEdit from './admin/GalleryEdit';
+import ContactLeads from './admin/contact';
+import AdminFranchiseForms from './admin/franchiseforms';
 
 
 function App() {
@@ -60,6 +65,16 @@ function App() {
               <Route path="edit/home" element={<EditHomePage />} />
               <Route path="edit/about" element={<AboutContext />} />
               <Route path="edit/parties" element={<EditParties />} />
+              <Route path="edit/services" element={<ServiceEditPage />} />
+              <Route path="edit/membership" element={<EditMembershipPlan />} />
+              <Route path="edit/gallery" element={<GalleryEdit />} />
+              <Route path="forms/contact" element={<ContactLeads />} />
+              <Route path="forms/franchise" element={<AdminFranchiseForms />} />
+
+
+
+
+              
 
 
             </Route>

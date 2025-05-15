@@ -6,7 +6,15 @@ const path = require('path');
 const multer = require('multer');
 const homeRoutes = require('./routes/homeRoutes'); // Import your home routes
 const aboutUsRoutes = require('./routes/aboutUsRoutes');
-const partiesPageRoutes = require('./routes/partiesPageRoutes');
+const partyRoutes = require('./routes/partyPageRoutes');
+const servicesRoutes = require('./routes/servicesRoutes');
+const membershipPlansRouter = require('./routes/membershipPlansRoutes');
+const galleryRoutes = require('./routes/galleryroutes');
+const contactRoutes = require('./routes/contactRoutes');
+const franchiseFormRoutes = require('./routes/franchiseFormRoutes');
+
+
+
 
 
 
@@ -40,12 +48,17 @@ const upload = multer({ storage });
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/home', homeRoutes);  // Ensure that 'homeRoutes' includes proper routes for section management
 app.use('/api/about', aboutUsRoutes);
-app.use('/api/parties', partiesPageRoutes);
+app.use('/api/parties', partyRoutes);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
+app.use('/api/services', servicesRoutes);
+app.use('/api/membership-plans', membershipPlansRouter);
+app.use('/api/gallery', galleryRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api', franchiseFormRoutes);
 
-
+  
 
 // Test route to check if the file is being uploaded
 app.post('/upload', upload.single('image'), (req, res) => {

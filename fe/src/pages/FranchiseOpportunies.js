@@ -1,35 +1,33 @@
-import React from "react";
-import { Row, Col, Form, Input, Button, Typography, Card } from "antd";
+import React, { useState } from "react";
+import { Row, Col, Form, Input, Button, Typography, Card, message } from "antd";
+import axios from "axios";
 import { TopSection } from "./About";
 import Wave3 from "../components/Wave3";
-import AboutUs from '../components/About';
-import image from "../assets/sample.jpg";
 import KiddtopiaFranchise from "../components/FranchiseModels";
 import Reviews from "../components/Reviews";
 
-const { Title, Paragraph } = Typography;
-
-const images = [
-  { src: image, width: "180px", height: "300px", mobileWidth: "120px", mobileHeight: "200px", borderRadius: "90px" },
-  { src: image, width: "300px", height: "300px", mobileWidth: "200px", mobileHeight: "200px", borderRadius: "40px" },
-  { src: image, width: "300px", height: "300px", mobileWidth: "200px", mobileHeight: "200px", borderRadius: "40px" },
-  { src: image, width: "180px", height: "300px", mobileWidth: "120px", mobileHeight: "200px", borderRadius: "50px" },
-];
-
-
-
-const paragraphs = [
-  "At Kiddtopia, we’ve got your little ones covered with super safe play areas and friendly staff keeping a close watch, so you can relax while they have fun.",
-  "Keep your little ones off the screen at home by bringing them to enjoy wall climbing and trampolines with us. Let the kids unleash their energy and make new friends while they play.",
-  "Endless fun at Kiddtopia with our awesome VR and arcade games—perfect for kids who love action-packed adventures and thrilling challenges. Your kids can have a blast in our play zones while you relax and enjoy tasty treats at our café with poolside gazebo seating!",
-  "Enjoy an exciting day at Kiddtopia with fun activities like UFO VR, Auto Run Car Racing, Go Karting, Agent VR Shooting, Zip Line, Digital Slides, Trampolines, and many more.",
-  "We host awesome birthday parties with games, decorations, and non-stop fun, as well as kitty parties, corporate events, pool parties, and more to make your child’s big day unforgettable."
-];
+const { Paragraph } = Typography;
 
 const Franchise = () => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/franchiseforms`, values);
+      message.success("Thank you for your interest! We'll contact you soon.");
+      form.resetFields();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      message.error("Failed to submit form. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
-    
       <TopSection heading={"Franchise Opportunities"} />
 
       <div style={{ padding: "40px" }}>
@@ -78,18 +76,38 @@ const Franchise = () => {
               <h1 style={{ textAlign: "center", marginBottom: 20 }}>
                 Registration Form
               </h1>
-              <Form layout="vertical">
-                <Form.Item name="fullName">
+              <Form 
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={{ message: '' }}
+              >
+                <Form.Item 
+                  name="fullName"
+                  rules={[{ required: true, message: 'Please enter your full name' }]}
+                >
                   <Input placeholder="Enter Full Name" className="newsletter-input" />
                 </Form.Item>
-                <Form.Item name="mobile">
+                <Form.Item 
+                  name="mobile"
+                  rules={[{ required: true, message: 'Please enter your mobile number' }]}
+                >
                   <Input placeholder="Enter Mobile No." className="newsletter-input" />
                 </Form.Item>
-                <Form.Item name="email">
+                <Form.Item 
+                  name="email"
+                  rules={[
+                    { required: true, message: 'Please enter your email address' },
+                    { type: 'email', message: 'Please enter a valid email address' }
+                  ]}
+                >
                   <Input placeholder="Enter Email Address" className="newsletter-input" />
                 </Form.Item>
-                <Form.Item name="city">
-                  <Input placeholder="Enter City" className="newsletter-input"  />
+                <Form.Item 
+                  name="city"
+                  rules={[{ required: true, message: 'Please enter your city' }]}
+                >
+                  <Input placeholder="Enter City" className="newsletter-input" />
                 </Form.Item>
                 <Form.Item name="message">
                   <Input.TextArea
@@ -101,17 +119,18 @@ const Franchise = () => {
                 <Form.Item>
                   <Button
                     type="primary"
+                    htmlType="submit"
+                    loading={loading}
                     block
                     style={{
                       backgroundColor: "#ff814a",
                       borderColor: "#ff814a",
                       fontWeight: "bold",
-                      width:150,
-                      justifyContent:"center",
-                      display:'flex',
-                      margin:"auto",
-                      borderRadius:20
-                      
+                      width: 150,
+                      justifyContent: "center",
+                      display: 'flex',
+                      margin: "auto",
+                      borderRadius: 20
                     }}
                   >
                     Register
@@ -122,9 +141,9 @@ const Franchise = () => {
           </Col>
         </Row>
       </div>
-      <Wave3/>
-      <KiddtopiaFranchise/>
-      <Reviews/>
+      <Wave3 />
+      <KiddtopiaFranchise />
+      <Reviews />
     </>
   );
 };

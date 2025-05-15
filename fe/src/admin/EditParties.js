@@ -1,514 +1,418 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
-  Menu,
-  Button,
-  Upload,
-  Input,
-  List,
-  Card,
-  Space,
-  Image,
   Typography,
+  Form,
+  Input,
+  Button,
+  message,
+  Card,
+  Switch,
+  Upload,
+  Space,
+  Collapse,
   Divider,
   Spin,
-  Row,
-  Col,
-  Empty,
   Modal,
-  Checkbox
+  Popconfirm,
+  Alert,
 } from 'antd';
 import {
-  UploadOutlined,
   PlusOutlined,
   DeleteOutlined,
   SaveOutlined,
-  FileTextOutlined,
+  PlusCircleOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
-const { Sider, Content } = Layout;
+const { Header, Content } = Layout;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
-const { Title } = Typography;
 
-const sectionOptions = [
-  { key: 'Header', icon: <FileTextOutlined /> },
-  { key: 'Section 1', icon: <FileTextOutlined /> },
-  { key: 'Section 2', icon: <FileTextOutlined /> },
-  { key: 'Section 3', icon: <FileTextOutlined /> },
-  { key: 'Section 4', icon: <FileTextOutlined /> },
-  { key: 'Section 5', icon: <FileTextOutlined /> },
-];
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
-const dummyUploadProps = {
-  beforeUpload: () => false,
-  multiple: false,
-};
+const PartiesAdmin = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [partyData, setPartyData] = useState({
+    mainHeading: '',
+    sections: [],
+  });
+  const [form] = Form.useForm();
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
 
-const Toast = ({ message, type, onClose }) => {
-  const bgColor = type === 'success' ? '#52c41a' : type === 'error' ? '#ff4d4f' : '#1890ff';
-
+  // Fetch party data on component mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+    fetchPartyData();
+  }, []);
+
+  const fetchPartyData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${BACKEND_URL}/api/parties`);
+      const data = response.data || { mainHeading: '', sections: [] };
+
+      setPartyData(data);
+      form.setFieldsValue({
+        mainHeading: data.mainHeading,
+        sections: data.sections.map((section) => ({
+          ...section,
+          paragraphs: section.paragraphs.join('\n\n'),
+        })),
+      });
+    } catch (error) {
+      console.error('Error fetching party data:', error);
+      message.error('Failed to load party data');
+      setPartyData({ mainHeading: '', sections: [] });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMainHeading = async (value) => {
+    try {
+      setSaving(true);
+      await axios.put(`${BACKEND_URL}/api/parties/heading`, { mainHeading: value });
+      message.success('Main heading updated successfully');
+      setPartyData((prev) => ({ ...prev, mainHeading: value }));
+    } catch (error) {
+      console.error('Error updating main heading:', error);
+      message.error('Failed to update main heading');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateSection = async (index, sectionData) => {
+    try {
+      setSaving(true);
+      const paragraphs = sectionData.paragraphs
+        .split('\n\n')
+        .filter((p) => p.trim());
+      const updatedSection = {
+        ...sectionData,
+        paragraphs,
+        images: sectionData.images || partyData.sections[index].images,
+      };
+
+      await axios.put(`${BACKEND_URL}/api/parties/section/${index}`, updatedSection);
+
+      setPartyData((prev) => ({
+        ...prev,
+        sections: prev.sections.map((sec, i) =>
+          i === index ? updatedSection : sec
+        ),
+      }));
+      message.success(`Section ${index + 1} updated successfully`);
+    } catch (error) {
+      console.error('Error updating section:', error);
+      message.error('Failed to update section');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addSection = async () => {
+    try {
+      setSaving(true);
+      const newSection = {
+        title: 'New Section Title',
+        paragraphs: ['Add your content here'],
+        images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+        reverse: false,
+      };
+
+      const response = await axios.post(`${BACKEND_URL}/api/parties/section`, newSection);
+      const updatedData = response.data;
+
+      setPartyData(updatedData);
+      form.setFieldsValue({
+        sections: updatedData.sections.map((section) => ({
+          ...section,
+          paragraphs: section.paragraphs.join('\n\n'),
+        })),
+      });
+      message.success('New section added');
+    } catch (error) {
+      console.error('Error adding section:', error);
+      message.error('Failed to add new section');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteSection = async (index) => {
+    try {
+      setSaving(true);
+      await axios.delete(`${BACKEND_URL}/api/parties/section/${index}`);
+
+      setPartyData((prev) => ({
+        ...prev,
+        sections: prev.sections.filter((_, i) => i !== index),
+      }));
+
+      form.setFieldsValue({
+        sections: partyData.sections
+          .filter((_, i) => i !== index)
+          .map((section) => ({
+            ...section,
+            paragraphs: section.paragraphs.join('\n\n'),
+          })),
+      });
+      message.success(`Section ${index + 1} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting section:', error);
+      message.error('Failed to delete section');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImagePreview = (file) => {
+    setPreviewImage(file.url || file.thumbUrl || '');
+    setImagePreviewOpen(true);
+  };
+
+  const handleImageUpload = async ({ file, onSuccess, onError }) => {
+    const formData = new FormData();
+    formData.append('images', file);
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/parties/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      onSuccess(response.data);
+      message.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      message.error('Failed to upload image');
+      onError(error);
+    }
+  };
+
+  const CustomImageUpload = ({ value, onChange, index, imageIndex }) => {
+    const handleChange = async (info) => {
+      if (info.file.status === 'done') {
+        const imagePath = info.file.response.imagePaths[0]; // Expecting a string
+
+        setPartyData((prev) => ({
+          ...prev,
+          sections: prev.sections.map((section, i) =>
+            i === index
+              ? {
+                  ...section,
+                  images: section.images.map((img, j) =>
+                    j === imageIndex ? imagePath : img
+                  ),
+                }
+              : section
+          ),
+        }));
+
+        if (onChange) {
+          onChange(imagePath);
+        }
+      }
+    };
+
+    const imageSrc =
+      value ||
+      (partyData.sections[index]?.images?.[imageIndex]) ||
+      '/Uploads/parties/placeholder.jpg';
+
+    return (
+      <Upload
+        name="images"
+        listType="picture-card"
+        showUploadList={false}
+        customRequest={handleImageUpload}
+        onChange={handleChange}
+        onPreview={handleImagePreview}
+      >
+        {imageSrc ? (
+          <img
+            src={`${BACKEND_URL}${imageSrc}`}
+            alt={`Section ${index + 1} Image ${imageIndex + 1}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div>
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>Upload</div>
+          </div>
+        )}
+      </Upload>
+    );
+  };
+
+  const getCollapseItems = () => {
+    return partyData.sections.map((section, sectionIndex) => ({
+      key: sectionIndex.toString(),
+      label: `Section ${sectionIndex + 1}: ${section.title}`,
+      extra: (
+        <Space>
+          <Popconfirm
+            title="Are you sure you want to delete this section?"
+            onConfirm={() => deleteSection(sectionIndex)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Delete
+            </Button>
+          </Popconfirm>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              const sectionData = form.getFieldValue('sections')[sectionIndex];
+              updateSection(sectionIndex, sectionData);
+            }}
+          >
+            Save
+          </Button>
+        </Space>
+      ),
+      children: (
+        <>
+          <Form.Item
+            label="Section Title"
+            name={['sections', sectionIndex, 'title']}
+            rules={[{ required: true, message: 'Please enter a title' }]}
+          >
+            <Input placeholder="Enter section title" />
+          </Form.Item>
+
+          <Form.Item
+            label="Paragraphs (separate paragraphs with blank lines)"
+            name={['sections', sectionIndex, 'paragraphs']}
+            rules={[{ required: true, message: 'Please enter content paragraphs' }]}
+          >
+            <TextArea
+              rows={6}
+              placeholder="Enter section content paragraphs. Separate paragraphs with blank lines."
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Reverse Layout"
+            name={['sections', sectionIndex, 'reverse']}
+            valuePropName="checked"
+          >
+            <Switch checkedChildren="Yes" unCheckedChildren="No" />
+          </Form.Item>
+
+          <Form.Item label="Images (up to 5)">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {Array(5)
+                .fill(null)
+                .map((_, imageIndex) => (
+                  <Form.Item
+                    key={imageIndex}
+                    name={['sections', sectionIndex, 'images', imageIndex]}
+                    noStyle
+                  >
+                    <CustomImageUpload
+                      index={sectionIndex}
+                      imageIndex={imageIndex}
+                    />
+                  </Form.Item>
+                ))}
+            </div>
+            <Text type="secondary">
+              Upload up to 5 images. Click on an image to preview or replace it.
+            </Text>
+          </Form.Item>
+
+          {sectionIndex === 2 && (
+            <Alert
+              message="Wave Component Placement"
+              description="The Wave component will automatically appear centered after this section on the front-end."
+              type="info"
+              showIcon
+            />
+          )}
+        </>
+      ),
+    }));
+  };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000,
-        padding: '12px 20px',
-        borderRadius: '4px',
-        backgroundColor: bgColor,
-        color: 'white',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        animation: 'fadeIn 0.3s, fadeOut 0.3s 2.7s',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-      }}
-    >
-      {type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'} {message}
-    </div>
-  );
-};
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{ background: '#fff', padding: '0 20px' }}>
+        <Title level={2}>Parties Admin Panel</Title>
+      </Header>
 
-const getDefaultSection = (sectionName) => {
-  if (sectionName === 'Header') {
-    return { mainTitle: '' };
-  }
-  return {
-    title: '',
-    paragraphs: [''],
-    images: Array(5).fill().map((_, i) => ({
-      src: '/default-party-image.jpg',
-      alt: `Party image ${i + 1}`,
-    })),
-    reverse: false
-  };
-};
-
-const PartiesEdit = () => {
-  const [selectedSection, setSelectedSection] = useState('Header');
-  const [contentData, setContentData] = useState({});
-  const [imageFile, setImageFile] = useState(null);
-  const [imageIndex, setImageIndex] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
-
-  const navigate = useNavigate();
-  const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-      showToast('Please log in to edit content', 'error');
-      navigate('/login');
-    }
-  }, [token, navigate]);
-
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ visible: true, message, type });
-  }, []);
-
-  const hideToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, visible: false }));
-  }, []);
-
-  useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [token]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get('/api/parties');
-      setContentData({
-        Header: {
-          mainTitle: res.data.header.mainTitle || '',
-        },
-        ...res.data.sections.reduce((acc, section, index) => ({
-          ...acc,
-          [`Section ${index + 1}`]: {
-            title: section.title,
-            paragraphs: section.paragraphs,
-            images: section.images,
-            reverse: section.reverse
-          }
-        }), {})
-      });
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setContentData({
-          Header: { mainTitle: '' },
-          'Section 1': getDefaultSection('Section 1'),
-          'Section 2': getDefaultSection('Section 2'),
-          'Section 3': getDefaultSection('Section 3'),
-          'Section 4': getDefaultSection('Section 4'),
-          'Section 5': getDefaultSection('Section 5'),
-        });
-        showToast('No Parties data found. You can create new content.', 'info');
-      } else {
-        showToast(err.response?.data?.message || 'Failed to fetch Parties data', 'error');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    const data = contentData[selectedSection] || getDefaultSection(selectedSection);
-
-    try {
-      if (selectedSection === 'Header') {
-        const res = await axios.put('/api/parties/header', {
-          mainTitle: data.mainTitle,
-        });
-        setContentData((prev) => ({
-          ...prev,
-          Header: { mainTitle: res.data.header.mainTitle },
-        }));
-        showToast('Header updated successfully');
-      } else {
-        const sectionIndex = parseInt(selectedSection.split(' ')[1]) - 1;
-        const filteredParagraphs = data.paragraphs.filter(p => p.trim() !== '');
-        if (filteredParagraphs.length === 0) {
-          showToast('At least one non-empty paragraph is required', 'error');
-          setLoading(false);
-          return;
-        }
-        await axios.put(`/api/parties/section/${sectionIndex}`, {
-          title: data.title,
-          paragraphs: filteredParagraphs,
-          reverse: data.reverse,
-        });
-        if (imageFile && imageIndex !== null) {
-          const formData = new FormData();
-          formData.append('image', imageFile);
-          await axios.post(`/api/parties/section/${sectionIndex}/image/${imageIndex}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-        }
-        await fetchData();
-        showToast(`${selectedSection} updated successfully`);
-        setImageFile(null);
-        setImageIndex(null);
-      }
-    } catch (err) {
-      showToast(err.response?.data?.message || `Error: ${err.message}`, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateSectionData = (section, data) => {
-    setContentData((prev) => ({ ...prev, [section]: data }));
-  };
-
-  const handleDeleteItem = async (itemType, index) => {
-    Modal.confirm({
-      title: `Are you sure you want to delete this ${itemType}?`,
-      onOk: async () => {
-        const data = contentData[selectedSection] || getDefaultSection(selectedSection);
-        try {
-          if (itemType === 'paragraph') {
-            updateSectionData(selectedSection, {
-              ...data,
-              paragraphs: data.paragraphs.filter((_, i) => i !== index),
-            });
-            showToast('Paragraph deleted successfully');
-          } else if (itemType === 'image') {
-            const sectionIndex = parseInt(selectedSection.split(' ')[1]) - 1;
-            await axios.delete(`/api/parties/section/${sectionIndex}/image/${index}`);
-            const updatedImages = [...data.images];
-            updatedImages[index] = {
-              src: '/default-party-image.jpg',
-              alt: `Default party image ${index + 1}`,
-            };
-            updateSectionData(selectedSection, {
-              ...data,
-              images: updatedImages,
-            });
-            showToast('Image reset successfully');
-          }
-        } catch (err) {
-          showToast(err.response?.data?.message || 'Failed to delete item', 'error');
-        }
-      },
-    });
-  };
-
-  const renderImageList = (images) => (
-    <Row gutter={[16, 16]}>
-      {images.map((img, idx) => (
-        <Col xs={24} sm={12} md={8} lg={6} key={idx}>
-          <Card
-            hoverable
-            cover={
-              <div style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    color: 'white',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                  }}
-                >
-                  {idx + 1}
-                </div>
-                <Image
-                  src={img.src}
-                  style={{ objectFit: 'cover', width: '100%', height: '200px' }}
-                  preview={{ mask: 'View' }}
-                />
-              </div>
-            }
-            actions={[
-              <Upload
-                {...dummyUploadProps}
-                onChange={({ fileList }) => {
-                  setImageFile(fileList[0]?.originFileObj);
-                  setImageIndex(idx);
-                }}
-                fileList={imageFile && imageIndex === idx ? [{ uid: '-1', name: imageFile.name }] : []}
-                onRemove={() => {
-                  setImageFile(null);
-                  setImageIndex(null);
-                }}
-                listType="picture"
-              >
-                <UploadOutlined />
-              </Upload>,
-              <Button
-                icon={<DeleteOutlined />}
-                style={{ color: 'red' }}
-                onClick={() => handleDeleteItem('image', idx)}
-                disabled={img.src === '/default-party-image.jpg'}
-              />,
-            ]}
+      <Content style={{ padding: '20px 50px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', margin: '50px 0' }}>
+            <Spin size="large" />
+            <p>Loading party data...</p>
+          </div>
+        ) : (
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={{
+              mainHeading: partyData.mainHeading,
+              sections: partyData.sections,
+            }}
           >
-            <Card.Meta title={`Image ${idx + 1}`} description={img.alt} />
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  );
-
-  const renderEditor = () => {
-    const data = contentData[selectedSection] || getDefaultSection(selectedSection);
-
-    switch (selectedSection) {
-      case 'Header':
-        return (
-          <Card title={<Title level={4}>Header</Title>} bordered={false} className="content-card">
-            <TextArea
-              value={data.mainTitle}
-              placeholder="Main Title"
-              rows={2}
-              onChange={(e) => {
-                updateSectionData('Header', { ...data, mainTitle: e.target.value });
-              }}
-            />
-          </Card>
-        );
-
-      default:
-        return (
-          <Card
-            title={<Title level={4}>{selectedSection}</Title>}
-            bordered={false}
-            className="content-card"
-          >
-            <div style={{ marginBottom: 24 }}>
-              <Title level={5}>Section Title</Title>
-              <Input
-                value={data.title}
-                placeholder={`${selectedSection} Title`}
-                onChange={(e) => {
-                  updateSectionData(selectedSection, { ...data, title: e.target.value });
-                }}
-                style={{ marginBottom: 16 }}
-              />
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <Title level={5}>Layout</Title>
-              <Checkbox
-                checked={data.reverse}
-                onChange={(e) => {
-                  updateSectionData(selectedSection, { ...data, reverse: e.target.checked });
-                }}
-              >
-                Reverse Layout
-              </Checkbox>
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <Title level={5}>Images</Title>
-              {data.images && data.images.length > 0 ? (
-                renderImageList(data.images)
-              ) : (
-                <Empty description="No images available" />
-              )}
-            </div>
-
-            <Divider />
-
-            <Title level={5}>Paragraphs</Title>
-            <List
-              dataSource={data.paragraphs}
-              renderItem={(item, idx) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleDeleteItem('paragraph', idx)}
-                    />,
-                  ]}
-                >
-                  <TextArea
-                    value={item}
-                    rows={3}
-                    onChange={(e) => {
-                      const updated = [...data.paragraphs];
-                      updated[idx] = e.target.value;
-                      updateSectionData(selectedSection, { ...data, paragraphs: updated });
-                    }}
-                  />
-                </List.Item>
-              )}
-              footer={
+            <Card
+              title="Main Heading"
+              extra={
                 <Button
-                  type="dashed"
-                  icon={<PlusOutlined />}
-                  onClick={() =>
-                    updateSectionData(selectedSection, {
-                      ...data,
-                      paragraphs: [...data.paragraphs, ''],
-                    })
-                  }
-                  block
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={() => updateMainHeading(form.getFieldValue('mainHeading'))}
+                  loading={saving}
                 >
-                  Add Paragraph
+                  Save
                 </Button>
               }
-            />
-          </Card>
-        );
-    }
-  };
-
-  if (!token) {
-    showToast('Please log in to edit content', 'error');
-    navigate('/login');
-    return null;
-  }
-
-  return (
-    <Layout>
-      <Sider
-        width={260}
-        style={{
-          background: '#fff',
-          borderRight: '1px solid #f0f0f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        }}
-        theme="light"
-      >
-        <div style={{ padding: '24px', textAlign: 'center' }}>
-          <Title level={3} style={{ marginBottom: 0, color: '#1890ff' }}>
-            Parties Page
-          </Title>
-          <Divider />
-        </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[selectedSection]}
-          onClick={({ key }) => setSelectedSection(key)}
-          style={{ borderRight: 0 }}
-        >
-          {sectionOptions.map(({ key, icon }) => (
-            <Menu.Item key={key} icon={icon}>
-              {key}
-            </Menu.Item>
-          ))}
-        </Menu>
-      </Sider>
-      <Layout>
-        <Content style={{ padding: '32px', background: '#f7f9fc' }}>
-          <Spin spinning={loading} tip="Processing...">
-            {renderEditor()}
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              loading={loading}
-              onClick={handleSave}
-              style={{
-                marginTop: 24,
-                height: '48px',
-                fontSize: '16px',
-                transition: 'all 0.3s',
-              }}
-              block
             >
-              Save Changes
+              <Form.Item
+                name="mainHeading"
+                rules={[{ required: true, message: 'Please enter the main heading' }]}
+              >
+                <Input placeholder="Enter main heading" />
+              </Form.Item>
+            </Card>
+
+            <Divider orientation="left">Party Sections</Divider>
+
+            <Button
+              type="dashed"
+              onClick={addSection}
+              style={{ width: '100%', marginBottom: 20 }}
+              icon={<PlusCircleOutlined />}
+              disabled={saving}
+            >
+              Add New Section
             </Button>
-          </Spin>
-        </Content>
-      </Layout>
 
-      {toast.visible && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+            <Collapse items={getCollapseItems()} accordion />
+          </Form>
+        )}
 
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeOut {
-          from {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-        }
-        .content-card {
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-      `}</style>
+        <Modal
+          open={imagePreviewOpen}
+          footer={null}
+          onCancel={() => setImagePreviewOpen(false)}
+        >
+          <img alt="Preview" style={{ width: '100%' }} src={previewImage} />
+        </Modal>
+      </Content>
     </Layout>
   );
 };
 
-export default PartiesEdit;
+export default PartiesAdmin;

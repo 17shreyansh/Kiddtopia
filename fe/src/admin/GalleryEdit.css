@@ -1,0 +1,122 @@
+
+
+    .gallery-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .gallery-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .gallery-header h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .gallery-header p {
+      color: #666;
+    }
+
+    .gallery-grid-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .gallery-grid {
+      background: transparent;
+      min-height: 800px;
+    }
+
+    .gallery-item {
+      background: transparent;
+      border: 2px dashed #ff9999;
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      height: 100%;
+      width: 100%;
+    }
+
+    .gallery-item:hover {
+      border-color: #ff6666;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .gallery-item-content {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gallery-item-content img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.3s ease;
+    }
+
+    .loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #999;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 70vh;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .modal-title {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 18px;
+      color: #444;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .modal-close:hover {
+      color: #000;
+    }
