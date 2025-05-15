@@ -4,7 +4,7 @@ import Comp2 from '../components/comp2';
 import Wave from '../components/Wave2';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL ;
 
 const Parties = () => {
   const [partyData, setPartyData] = useState({
