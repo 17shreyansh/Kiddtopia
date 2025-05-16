@@ -53,7 +53,9 @@ const AdminLayout = () => {
           <Menu.Item key="/admin" icon={<AppstoreOutlined />}>
             <Link to="/admin">Dashboard</Link>
           </Menu.Item>
-
+<Menu.Item key="/admin/blogs" icon={<FileTextOutlined />}>
+    <Link to="/admin/blogs">Blogs</Link>
+  </Menu.Item>
           <SubMenu key="edit" icon={<EditOutlined />} title="Edit Pages">
             <Menu.Item key="/admin/edit/home" icon={<HomeOutlined />}>
               <Link to="/admin/edit/home">Home Page</Link>

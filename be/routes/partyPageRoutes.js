@@ -3,6 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Party = require('../models/Party');
+const auth = require('../middleware/authMiddleware');
+
 
 const router = express.Router();
 
@@ -113,7 +115,7 @@ router.get('/', async (req, res) => {
 });
 
 // PUT - Update main heading
-router.put('/heading', async (req, res) => {
+router.put('/heading',auth, async (req, res) => {
   try {
     const { mainHeading } = req.body;
 
@@ -147,7 +149,7 @@ router.put('/heading', async (req, res) => {
 });
 
 // POST - Add a new section
-router.post('/section', async (req, res) => {
+router.post('/section',auth, async (req, res) => {
   try {
     const { title, paragraphs, images, reverse } = req.body;
 
@@ -184,7 +186,7 @@ router.post('/section', async (req, res) => {
 });
 
 // PUT - Update a specific section
-router.put('/section/:index', async (req, res) => {
+router.put('/section/:index',auth, async (req, res) => {
   try {
     const { index } = req.params;
     const { title, paragraphs, images, reverse } = req.body;
@@ -221,7 +223,7 @@ router.put('/section/:index', async (req, res) => {
 });
 
 // DELETE - Remove a section
-router.delete('/section/:index', async (req, res) => {
+router.delete('/section/:index',auth, async (req, res) => {
   try {
     const { index } = req.params;
 
@@ -249,7 +251,7 @@ router.delete('/section/:index', async (req, res) => {
 });
 
 // POST - Upload images
-router.post('/upload', upload.array('images', 5), async (req, res) => {
+router.post('/upload',auth, upload.array('images', 5), async (req, res) => {
   try {
     const files = req.files;
 

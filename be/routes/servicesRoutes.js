@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ServicesPage = require('../models/Service');
 const upload = require('../middleware/uploadMiddleware'); // Your multer middleware
+const auth = require('../middleware/authMiddleware');
+
 
 // Get services page data
 router.get('/', async (req, res) => {
@@ -10,7 +12,7 @@ router.get('/', async (req, res) => {
 });
 
 // Update services page (heading and all services)
-router.put('/', upload.array('images'), async (req, res) => {
+router.put('/',auth, upload.array('images'), async (req, res) => {
   const { heading, services } = req.body;
   let parsedServices = JSON.parse(services);
 

@@ -1,0 +1,161 @@
+.blog-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 80px;
+  margin: 0 auto;
+  font-family: 'Outfit', sans-serif;
+  color: black;
+}
+
+.main-image-container {
+  width: 100%;
+  height: 40vw;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 2px dashed #f87171;
+  border-radius: 30px;
+}
+
+.content-container {
+  width: 100%;
+  padding: 20px;
+  border-radius: 10px;
+  line-height: 1.8;
+  font-size: 1rem;
+  color: black;
+}
+
+.content-container h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: black;
+}
+
+.content-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #3498db;
+}
+
+.content-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #217dbb;
+}
+
+.content-container p,
+.content-container li {
+  margin-bottom: 1rem;
+  color: black;
+}
+
+.content-container a {
+  color: #e74c3c;
+}
+
+.content-container a:hover {
+  color: #c0392b;
+}
+
+.content-container ul,
+.content-container ol {
+  margin-left: 20px;
+  margin-bottom: 1rem;
+}
+
+.content-container img {
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 30px;
+  max-width: 60vh;
+  border: 2px dashed #000;
+}
+
+.content-container blockquote {
+  border-left: 5px solid #e74c3c;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #7f8c8d;
+}
+
+.content-container hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #bdc3c7;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover {
+  color: #2980b9;
+}
+
+.back-button svg {
+  margin-right: 5px;
+  font-size: 1.2rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-image-container {
+    border-radius: 10px;
+  }
+  .blog-page-container{
+      padding: 0 5px;
+
+  }
+
+  .main-image {
+    border-radius: 20px;
+  }
+
+  .content-container {
+    padding: 15px;
+    font-size: 0.95rem;
+  }
+
+  .content-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .content-container h2 {
+    font-size: 1.2rem;
+  }
+
+  .content-container h3 {
+    font-size: 1rem;
+  }
+
+  .content-container img {
+    border-radius: 20px;
+    max-width: 90vw;
+  }
+
+  .back-button {
+    font-size: 0.9rem;
+  }
+
+  .back-button svg {
+    font-size: 1rem;
+  }
+}

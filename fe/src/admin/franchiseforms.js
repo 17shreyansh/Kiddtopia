@@ -43,54 +43,73 @@ const AdminFranchiseForms = () => {
     fetchFranchiseForms();
   }, []);
 
-  const fetchFranchiseForms = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/franchiseforms`);
-      setForms(response.data);
-      
-      // Calculate statistics
-      const now = new Date();
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
-      const thisWeekForms = response.data.filter(
-        form => new Date(form.createdAt) >= oneWeekAgo
-      ).length;
-      
-      const thisMonthForms = response.data.filter(
-        form => new Date(form.createdAt) >= oneMonthAgo
-      ).length;
-      
-      setStats({
-        total: response.data.length,
-        thisWeek: thisWeekForms,
-        thisMonth: thisMonthForms
-      });
-    } catch (error) {
-      console.error('Error fetching franchise forms:', error);
-      message.error('Failed to load franchise form submissions');
-    } finally {
-      setLoading(false);
-    }
-  };
+ const fetchFranchiseForms = async () => {
+  setLoading(true);
+  const token = localStorage.getItem('token'); // or sessionStorage.getItem('token')
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_BACKEND_URL}/api/franchiseforms`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Stats calculation
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const thisWeekForms = response.data.filter(
+      (form) => new Date(form.createdAt) >= oneWeekAgo
+    ).length;
+
+    const thisMonthForms = response.data.filter(
+      (form) => new Date(form.createdAt) >= oneMonthAgo
+    ).length;
+
+    setForms(response.data);
+    setStats({
+      total: response.data.length,
+      thisWeek: thisWeekForms,
+      thisMonth: thisMonthForms,
+    });
+  } catch (error) {
+    console.error('Error fetching franchise forms:', error);
+    message.error('Failed to load franchise form submissions');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleDeleteForm = async (id) => {
+  const token = localStorage.getItem('token');
+  try {
+    await axios.delete(
+      `${process.env.REACT_APP_BACKEND_URL}/api/franchiseforms/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    message.success('Franchise form deleted successfully');
+    fetchFranchiseForms();
+    setIsModalVisible(false);
+  } catch (error) {
+    console.error('Error deleting franchise form:', error);
+    message.error('Failed to delete franchise form');
+  }
+};
+
 
   const handleViewForm = (record) => {
     setSelectedForm(record);
     setIsModalVisible(true);
   };
 
-  const handleDeleteForm = async (id) => {
-    try {
-      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/franchiseforms/${id}`);
-      message.success('Franchise form deleted successfully');
-      fetchFranchiseForms();
-      setIsModalVisible(false);
-    } catch (error) {
-      console.error('Error deleting franchise form:', error);
-      message.error('Failed to delete franchise form');
-    }
-  };
+
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);

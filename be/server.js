@@ -8,11 +8,10 @@ const homeRoutes = require('./routes/homeRoutes'); // Import your home routes
 const aboutUsRoutes = require('./routes/aboutUsRoutes');
 const partyRoutes = require('./routes/partyPageRoutes');
 const servicesRoutes = require('./routes/servicesRoutes');
-const membershipPlansRouter = require('./routes/membershipPlansRoutes');
 const galleryRoutes = require('./routes/galleryroutes');
 const contactRoutes = require('./routes/contactRoutes');
 const franchiseFormRoutes = require('./routes/franchiseFormRoutes');
-
+const blogRoutes = require('./routes/blogRoutes');
 
 
 
@@ -53,10 +52,10 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 app.use('/api/services', servicesRoutes);
-app.use('/api/membership-plans', membershipPlansRouter);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/contacts', contactRoutes);
-app.use('/api', franchiseFormRoutes);
+app.use('/api/franchiseforms', franchiseFormRoutes);
+app.use('/api/blogs', blogRoutes);
 
   
 

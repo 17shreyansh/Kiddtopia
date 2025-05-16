@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/Contact');
+const auth = require('../middleware/authMiddleware');
 
 // @route   POST api/contacts
 // @desc    Create a new contact
@@ -30,8 +31,8 @@ router.post('/', async (req, res) => {
 
 // @route   GET api/contacts
 // @desc    Get all contacts
-// @access  Private (should be protected with authentication in production)
-router.get('/', async (req, res) => {
+// @access  Private
+router.get('/', auth, async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: contacts.length, data: contacts });
@@ -44,7 +45,7 @@ router.get('/', async (req, res) => {
 // @route   GET api/contacts/:id
 // @desc    Get contact by ID
 // @access  Private
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
     if (!contact) {
@@ -63,7 +64,7 @@ router.get('/:id', async (req, res) => {
 // @route   PUT api/contacts/:id
 // @desc    Update contact status
 // @access  Private
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const { status } = req.body;
     
@@ -91,7 +92,7 @@ router.put('/:id', async (req, res) => {
 // @route   DELETE api/contacts/:id
 // @desc    Delete a contact
 // @access  Private
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
     if (!contact) {

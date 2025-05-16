@@ -1,0 +1,67 @@
+.rich-text-editor-container {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0; /* Remove padding if menubar handles it */
+    background: #fff;
+}
+
+.editor-menubar {
+    margin-bottom: 0px; /* Remove margin if not needed */
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fafafa;
+    border-radius: 4px 4px 0 0;
+    display: flex; /* Ensure items are in a row */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 4px; /* Add some gap between buttons */
+}
+
+.editor-menubar .ant-btn {
+    display: inline-flex; /* Align icon and text if any */
+    align-items: center;
+    justify-content: center;
+}
+
+.tiptap-editor-field {
+    min-height: 250px; /* Increased min-height */
+    padding: 12px;
+    outline: none;
+    line-height: 1.6;
+    overflow-y: auto; /* Add scroll if content overflows */
+}
+
+.tiptap-editor-field > .ProseMirror {
+    min-height: 230px; /* Ensure ProseMirror itself has min-height */
+}
+
+.tiptap-editor-field p {
+    margin-bottom: 0.75em;
+}
+
+.tiptap-editor-field h1,
+.tiptap-editor-field h2,
+.tiptap-editor-field h3 {
+    margin-top: 1.2em;
+    margin-bottom: 0.6em;
+    line-height: 1.3;
+}
+
+.tiptap-editor-field ul,
+.tiptap-editor-field ol {
+    padding-left: 1.75em;
+    margin-bottom: 0.75em;
+}
+
+/* Image styling within the editor */
+.tiptap-editor-field img {
+    max-width: 100%; /* Make images responsive within the editor */
+    height: auto;
+    display: block; /* Or 'inline-block' if preferred */
+    margin: 0.5em 0; /* Add some vertical spacing around images */
+    border-radius: 4px; /* Optional: style images */
+    border: 1px solid #eee; /* Optional: style images */
+}
+
+.tiptap-editor-field img.ProseMirror-selectednode { /* Style for selected image */
+  outline: 3px solid #68CEF8;
+}

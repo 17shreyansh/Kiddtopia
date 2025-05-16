@@ -98,3 +98,65 @@ display: none;  }
 }
 
   
+
+.rich-text-editor-container {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 5px;
+    background: #fff;
+}
+
+.editor-menubar {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fafafa;
+    border-radius: 4px 4px 0 0;
+}
+
+.tiptap-editor-field {
+    min-height: 200px; /* Adjust as needed */
+    padding: 10px;
+    outline: none; /* Remove default focus outline if antd's focus is preferred */
+    line-height: 1.6;
+}
+
+.tiptap-editor-field > .ProseMirror {
+    min-height: 200px; /* Ensure ProseMirror itself has min-height */
+}
+
+.tiptap-editor-field p {
+    margin-bottom: 0.5em;
+}
+
+.tiptap-editor-field h1,
+.tiptap-editor-field h2,
+.tiptap-editor-field h3 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    line-height: 1.2;
+}
+
+.tiptap-editor-field ul,
+.tiptap-editor-field ol {
+    padding-left: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+.tiptap-editor-field pre {
+    background: #f5f5f5;
+    color: #333;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 0.75em 1em;
+    border-radius: 0.25em;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.tiptap-editor-field blockquote {
+    border-left: 3px solid #ccc;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 1em;
+    font-style: italic;
+}

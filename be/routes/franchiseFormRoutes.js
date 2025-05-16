@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const FranchiseForm = require('../models/FranchiseForm');
+const auth = require('../middleware/authMiddleware');
+
 
 /**
  * @route   GET /api/franchiseforms
  * @desc    Get all franchise form submissions
  * @access  Private (admin only)
  */
-router.get('/franchiseforms', async (req, res) => {
+router.get('/',auth, async (req, res) => {
   try {
     const franchiseForms = await FranchiseForm.find().sort({ createdAt: -1 });
     res.json(franchiseForms);
@@ -22,7 +24,7 @@ router.get('/franchiseforms', async (req, res) => {
  * @desc    Get franchise form by ID
  * @access  Private (admin only)
  */
-router.get('/franchiseforms/:id', async (req, res) => {
+router.get('/:id',auth, async (req, res) => {
   try {
     const franchiseForm = await FranchiseForm.findById(req.params.id);
     
@@ -47,7 +49,7 @@ router.get('/franchiseforms/:id', async (req, res) => {
  * @desc    Create a new franchise form submission
  * @access  Public
  */
-router.post('/franchiseforms', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { fullName, mobile, email, city, message } = req.body;
     
@@ -78,7 +80,7 @@ router.post('/franchiseforms', async (req, res) => {
  * @desc    Delete a franchise form submission
  * @access  Private (admin only)
  */
-router.delete('/franchiseforms/:id', async (req, res) => {
+router.delete('/:id',auth, async (req, res) => {
   try {
     const franchiseForm = await FranchiseForm.findById(req.params.id);
     

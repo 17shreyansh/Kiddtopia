@@ -34,6 +34,16 @@ const ContactLeads = () => {
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
+  // 🔐 Get JWT token from localStorage
+  const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    };
+  };
+
   useEffect(() => {
     fetchLeads();
   }, []);
@@ -78,7 +88,7 @@ const ContactLeads = () => {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${backendUrl}/api/contacts`);
+      const res = await axios.get(`${backendUrl}/api/contacts`, getAuthHeader());
       setLeads(res.data.data);
       setFilteredLeads(res.data.data);
     } catch (err) {
@@ -91,7 +101,11 @@ const ContactLeads = () => {
 
   const handleUpdateStatus = async (status) => {
     try {
-      await axios.put(`${backendUrl}/api/contacts/${currentLead._id}`, { status });
+      await axios.put(
+        `${backendUrl}/api/contacts/${currentLead._id}`,
+        { status },
+        getAuthHeader()
+      );
       message.success(`Lead status updated to ${status}`);
       setIsModalVisible(false);
       const updatedLeads = leads.map(lead =>
@@ -104,21 +118,19 @@ const ContactLeads = () => {
     }
   };
 
-const handleDelete = async (id) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this lead? This action cannot be undone.");
-  if (!confirmDelete) return;
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this lead? This action cannot be undone.");
+    if (!confirmDelete) return;
 
-  try {
-    await axios.delete(`${backendUrl}/api/contacts/${id}`);
-    message.success('Lead deleted');
-    // Use effect to update leads
-    setLeads(prev => prev.filter(lead => lead._id !== id));
-  } catch (err) {
-    console.error('Delete failed:', err);
-    message.error('Failed to delete lead');
-  }
-};
-
+    try {
+      await axios.delete(`${backendUrl}/api/contacts/${id}`, getAuthHeader());
+      message.success('Lead deleted');
+      setLeads(prev => prev.filter(lead => lead._id !== id));
+    } catch (err) {
+      console.error('Delete failed:', err);
+      message.error('Failed to delete lead');
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -182,11 +194,9 @@ const handleDelete = async (id) => {
   };
 
   return (
-    <Layout >
+    <Layout>
       <Header style={{ padding: 0, background: '#fff' }} />
       <Content style={{ margin: '16px' }}>
-       
-
         <Row gutter={16} style={{ marginBottom: 20 }}>
           <Col span={6}><Card><Statistic title="Total Leads" value={statistics.total} prefix={<TeamOutlined />} /></Card></Col>
           <Col span={6}><Card><Statistic title="New" value={statistics.new} prefix={<Badge status="processing" />} /></Card></Col>
@@ -235,7 +245,6 @@ const handleDelete = async (id) => {
         </div>
       </Content>
 
-      {/* Modal */}
       {currentLead && (
         <Modal
           title="Lead Details"

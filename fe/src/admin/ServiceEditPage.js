@@ -9,18 +9,38 @@ const ServiceEditPage = () => {
   const [form] = Form.useForm();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState("");
 
-  // Fetch current data
+  // Fetch JWT token on mount
   useEffect(() => {
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/services`).then(res => {
-      if (res.data) {
-        form.setFieldsValue({
-          heading: res.data.heading,
-        });
-        setServices(res.data.services || []);
-      }
-    });
-  }, [form]);
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      message.error("Authentication token not found. Please login.");
+    }
+  }, []);
+
+  // Fetch current data once token is available
+  useEffect(() => {
+    if (!token) return;
+
+    axios
+      .get(`${process.env.REACT_APP_BACKEND_URL}/api/services`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (res.data) {
+          form.setFieldsValue({
+            heading: res.data.heading,
+          });
+          setServices(res.data.services || []);
+        }
+      })
+      .catch(() => {
+        message.error("Failed to fetch services data.");
+      });
+  }, [form, token]);
 
   // Handle form submit
   const onFinish = async (values) => {
@@ -48,7 +68,10 @@ const ServiceEditPage = () => {
 
     try {
       await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/services`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
       message.success("Services updated!");
     } catch (e) {
@@ -97,19 +120,19 @@ const ServiceEditPage = () => {
               >
                 <Input
                   value={service.title}
-                  onChange={e => handleServiceChange(idx, "title", e.target.value)}
+                  onChange={(e) => handleServiceChange(idx, "title", e.target.value)}
                   placeholder="Title"
                   style={{ marginBottom: 8 }}
                 />
                 <TextArea
                   value={service.description}
-                  onChange={e => handleServiceChange(idx, "description", e.target.value)}
+                  onChange={(e) => handleServiceChange(idx, "description", e.target.value)}
                   rows={3}
                   placeholder="Description"
                   style={{ marginBottom: 8 }}
                 />
                 <Upload
-                  beforeUpload={file => {
+                  beforeUpload={(file) => {
                     handleImageChange(idx, file);
                     return false;
                   }}
@@ -136,9 +159,7 @@ const ServiceEditPage = () => {
           type="dashed"
           block
           icon={<PlusOutlined />}
-          onClick={() =>
-            setServices([...services, { title: "", description: "", image: "" }])
-          }
+          onClick={() => setServices([...services, { title: "", description: "", image: "" }])}
         >
           Add Service
         </Button>

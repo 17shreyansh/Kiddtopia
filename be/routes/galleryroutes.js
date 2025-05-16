@@ -9,6 +9,8 @@ const {
   updateGalleryItem,
   initializeGallery
 } = require('../controllers/galleryController');
+const auth = require('../middleware/authMiddleware');
+
 
 // Set up Multer for file uploads
 const storage = multer.diskStorage({
@@ -31,7 +33,7 @@ const upload = multer({ storage });
 // Routes
 router.get('/', getGalleryItems);
 router.get('/:itemId', getGalleryItem);
-router.put('/:itemId', upload.single('image'), updateGalleryItem);
-router.post('/initialize', initializeGallery);
+router.put('/:itemId',auth, upload.single('image'), updateGalleryItem);
+router.post('/initialize',auth, initializeGallery);
 
 module.exports = router;

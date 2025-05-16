@@ -29,7 +29,7 @@ const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const PartiesAdmin = () => {
   const [loading, setLoading] = useState(true);
@@ -41,16 +41,36 @@ const PartiesAdmin = () => {
   const [form] = Form.useForm();
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
+  const [token, setToken] = useState('');
 
-  // Fetch party data on component mount
+  // Get JWT token from localStorage or any other secure storage on mount
   useEffect(() => {
-    fetchPartyData();
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      message.error('Authentication token not found. Please login.');
+    }
   }, []);
+
+  // Fetch party data on component mount (after token is set)
+  useEffect(() => {
+    if (token) {
+      fetchPartyData();
+    }
+  }, [token]);
+
+  // Setup axios headers with JWT token
+  const axiosConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 
   const fetchPartyData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${BACKEND_URL}/api/parties`);
+      const response = await axios.get(`${BACKEND_URL}/api/parties`, axiosConfig);
       const data = response.data || { mainHeading: '', sections: [] };
 
       setPartyData(data);
@@ -73,7 +93,11 @@ const PartiesAdmin = () => {
   const updateMainHeading = async (value) => {
     try {
       setSaving(true);
-      await axios.put(`${BACKEND_URL}/api/parties/heading`, { mainHeading: value });
+      await axios.put(
+        `${BACKEND_URL}/api/parties/heading`,
+        { mainHeading: value },
+        axiosConfig
+      );
       message.success('Main heading updated successfully');
       setPartyData((prev) => ({ ...prev, mainHeading: value }));
     } catch (error) {
@@ -96,7 +120,11 @@ const PartiesAdmin = () => {
         images: sectionData.images || partyData.sections[index].images,
       };
 
-      await axios.put(`${BACKEND_URL}/api/parties/section/${index}`, updatedSection);
+      await axios.put(
+        `${BACKEND_URL}/api/parties/section/${index}`,
+        updatedSection,
+        axiosConfig
+      );
 
       setPartyData((prev) => ({
         ...prev,
@@ -123,7 +151,11 @@ const PartiesAdmin = () => {
         reverse: false,
       };
 
-      const response = await axios.post(`${BACKEND_URL}/api/parties/section`, newSection);
+      const response = await axios.post(
+        `${BACKEND_URL}/api/parties/section`,
+        newSection,
+        axiosConfig
+      );
       const updatedData = response.data;
 
       setPartyData(updatedData);
@@ -145,7 +177,10 @@ const PartiesAdmin = () => {
   const deleteSection = async (index) => {
     try {
       setSaving(true);
-      await axios.delete(`${BACKEND_URL}/api/parties/section/${index}`);
+      await axios.delete(
+        `${BACKEND_URL}/api/parties/section/${index}`,
+        axiosConfig
+      );
 
       setPartyData((prev) => ({
         ...prev,
@@ -179,9 +214,16 @@ const PartiesAdmin = () => {
     formData.append('images', file);
 
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/parties/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await axios.post(
+        `${BACKEND_URL}/api/parties/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       onSuccess(response.data);
       message.success('Image uploaded successfully');
     } catch (error) {

@@ -29,14 +29,20 @@ const AdminPage = () => {
   const [uploading, setUploading] = useState(false);
   const [fileList, setFileList] = useState([]);
 
-  // API base URL
   const API_URL = process.env.REACT_APP_BACKEND_URL;
+  const token = localStorage.getItem('token');
+
+  const authHeader = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 
   // Fetch gallery items
   const fetchGalleryItems = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/gallery`);
+      const response = await axios.get(`${API_URL}/api/gallery`, authHeader);
       setGalleryItems(response.data);
       setLoading(false);
     } catch (error) {
@@ -49,7 +55,7 @@ const AdminPage = () => {
   // Initialize gallery
   const initializeGallery = async () => {
     try {
-      await axios.post(`${API_URL}/api/gallery/initialize`);
+      await axios.post(`${API_URL}/api/gallery/initialize`, {}, authHeader);
       message.success('Gallery initialized successfully');
       fetchGalleryItems();
     } catch (error) {
@@ -62,7 +68,6 @@ const AdminPage = () => {
     fetchGalleryItems();
   }, []);
 
-  // Open edit modal
   const showEditModal = (item) => {
     setCurrentItem(item);
     form.setFieldsValue({
@@ -72,12 +77,10 @@ const AdminPage = () => {
     setEditModalVisible(true);
   };
 
-  // Handle file change
   const handleFileChange = ({ fileList }) => {
     setFileList(fileList);
   };
 
-  // Handle form submission
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -94,6 +97,7 @@ const AdminPage = () => {
       await axios.put(`${API_URL}/api/gallery/${currentItem.itemId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
       });
 
