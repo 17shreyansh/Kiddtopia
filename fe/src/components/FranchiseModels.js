@@ -64,7 +64,8 @@ const InfoCard = ({ model }) => {
             setFontSize(currentFontSize);
         };
 
-        setTimeout(shrinkToFit, 100); // Give time for rendering
+        // Use a timeout to allow for initial rendering
+        setTimeout(shrinkToFit, 100);
     }, [model]);
 
     return (
@@ -79,7 +80,7 @@ const InfoCard = ({ model }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                height: 340,
+                height: '100%', // Make cards have equal height.
             }}
         >
             <div
@@ -115,7 +116,7 @@ const KiddtopiaFranchise = () => {
             <h1 className='title' style={{ color: "black", fontSize: "1.8rem" }}>Kiddtopia Franchise Models</h1>
 
             <Row gutter={[24, 24]} justify="center">
-                <Col xs={12} md={22} lg={10}>
+                <Col xs={24} md={12} lg={10}>
                     <div style={{ border: '1px solid #eee', borderRadius: '12px', padding: '20px' }}>
                         <Paragraph>
                             <Text strong>Easy Steps to Open</Text><br />
@@ -143,7 +144,7 @@ const KiddtopiaFranchise = () => {
                 </Col>
 
                 {franchiseModels.map((model, idx) => (
-                    <Col key={idx} xs={12} md={22} lg={10}>
+                    <Col key={idx} xs={24} md={12} lg={10}>
                         <InfoCard model={model} />
                     </Col>
                 ))}

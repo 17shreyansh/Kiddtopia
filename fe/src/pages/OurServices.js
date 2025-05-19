@@ -101,8 +101,8 @@ const Service = () => {
 
   return (
     <>
-      <TopSection heading={heading}>
-        <h2 style={{ fontSize: isMobile ? "20px" : "40px" }}>{heading}</h2>
+      <TopSection heading={"Our Services"} >
+        <h2 style={{ fontSize: isMobile ? "20px" : "40px",color: '#DF2126' }}>{heading}</h2>
       </TopSection>
 
       <div

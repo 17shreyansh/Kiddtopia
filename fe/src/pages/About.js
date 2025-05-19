@@ -67,8 +67,10 @@ const TopSection = ({ heading, children }) => {
         style={{
           position: 'absolute',
           bottom: '0',
-          width: '100%',
+          width: '80%',
           zIndex: 5,
+          left: '50%', /* Move the left edge to the center */
+          transform: 'translateX(-50%)', /* Move the element back by half its width */
           textAlign: 'center',
         }}
       >
@@ -107,7 +109,7 @@ const About = () => {
 
   // Assuming the base URL for images should be the same as the backend URL
   const getImageUrl = (src) => {
-    const baseUrl = process.env.REACT_APP_BACKEND_URL ; // Set your server base URL here
+    const baseUrl = process.env.REACT_APP_BACKEND_URL; // Set your server base URL here
     return `${baseUrl}${src}`;
   };
 

@@ -103,7 +103,7 @@ const AboutSection = ({
     >
       <div
         style={{
-          display: isMobile ? "grid" : "flex",
+          display:  "flex",
           gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
           gap: isMobile ? "5px" : "10px",
           flexWrap: "wrap",
