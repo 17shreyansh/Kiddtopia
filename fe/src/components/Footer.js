@@ -11,7 +11,10 @@ import { Form } from "./Newsletter";
 import Logo from "../assets/logo.png";
 import C1 from "../assets/c1.png";
 import C2 from "../assets/c2.png";
-import C3 from "../assets/c2.png";
+import C3 from "../assets/c2.png"; // Assuming C3 is also a cloud image
+
+// Import motion from framer-motion
+import { motion } from 'framer-motion';
 
 const Cloud = ({ brightness = 1 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -25,19 +28,35 @@ const Cloud = ({ brightness = 1 }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Define animation variants for continuous cloud movement
+  const cloudVariants = {
+    // This state defines the continuous floating and drifting
+    float: (custom) => ({
+      x: [0, custom.xRange, 0], // Drifts horizontally
+      y: [0, custom.yRange, 0], // Subtle vertical bob
+      transition: {
+        duration: custom.duration, // Animation duration
+        ease: "easeInOut",        // Smooth easing
+        repeat: Infinity,         // Loop forever
+        repeatType: "reverse",    // Play forward then reverse
+        delay: custom.delay,      // Stagger clouds with different delays
+      },
+    }),
+  };
+
   const baseStyle = {
     position: "absolute",
-    rotate: "180deg",
+    rotate: "180deg", // Assuming clouds are upside down or for visual effect
     width: isMobile ? "80vw" : "43vw",
     userSelect: "none",
     pointerEvents: "none",
     filter: `brightness(${brightness})`,
-    
   };
 
   return (
     <>
-      <img  
+      {/* Cloud 1 */}
+      <motion.img
         src={C1}
         alt="cloud1"
         style={{
@@ -45,8 +64,13 @@ const Cloud = ({ brightness = 1 }) => {
           top: isMobile ? "-6vh" : "-9vh",
           left: isMobile ? "-60vw" : -150,
         }}
+        variants={cloudVariants}
+        // Use custom prop to define unique animation parameters for each cloud
+        custom={{ xRange: "5vw", yRange: "2vh", duration: 40, delay: 0 }} // Reduced range, increased duration
+        animate="float" // Apply the float animation
       />
-      <img
+      {/* Cloud 2 */}
+      <motion.img
         src={C2}
         alt="cloud2"
         style={{
@@ -54,8 +78,12 @@ const Cloud = ({ brightness = 1 }) => {
           top: isMobile ? "-5vh" : "-9vh",
           left: isMobile ? "10vw" : "27%",
         }}
+        variants={cloudVariants}
+        custom={{ xRange: "-4vw", yRange: "1.5vh", duration: 45, delay: 5 }} // Reduced range, increased duration, different parameters for variety
+        animate="float"
       />
-      <img
+      {/* Cloud 3 */}
+      <motion.img
         src={C3}
         alt="cloud3"
         style={{
@@ -63,21 +91,46 @@ const Cloud = ({ brightness = 1 }) => {
           top: isMobile ? "-7vh" : "-10vh",
           right: isMobile ? "-20vw" : -100,
         }}
+        variants={cloudVariants}
+        custom={{ xRange: "6vw", yRange: "-2.5vh", duration: 42, delay: 10 }} // Reduced range, increased duration, even more variety
+        animate="float"
       />
     </>
   );
 };
 
-
+const quickLinks = [
+  { label: 'Home', path: '/' },
+  { label: 'About Us', path: '/about' },
+  { label: 'Parties', path: '/parties' },
+  { label: 'Our Services', path: '/services' },
+  { label: 'Franchise', path: '/franchise' },
+  { label: 'Membership', path: '/membership' },
+  { label: 'Gallery', path: '/gallery' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'Contact Us', path: '/contact' },
+];
 
 const Footer = () => {
+  const linkStyle = {
+    color: "#fff",
+    textDecoration: "none",
+    fontFamily: "Poppins, sans-serif",
+  };
+
+  const bottomLinkStyle = {
+    color: "#000",
+    textDecoration: "none",
+    marginRight: 10,
+  };
+
   return (
     <div
       style={{
         backgroundColor: "#002B5B",
         color: "#fff",
         position: "relative",
-        overflow: "hidden",
+        overflow: "hidden", // Important to clip clouds that move out of bounds
       }}
     >
       {/* Cloud Backgrounds */}
@@ -129,60 +182,44 @@ const Footer = () => {
           </Col>
 
           {/* Quick Links x2 */}
-          {[1, 2].map((_, index) => (
-            <Col
-              xs={12}
-              md={4}
-              key={index}
-              style={{
-                textAlign: "center",
-                marginBottom: 20,
-              }}
-            >
-              <h4
-                style={{
-                  color: "#ffce00",
-                  fontFamily: "Poppins, sans-serif",
-                }}
-              >
-                Quick Links
-              </h4>
-              <ul
-                style={{
-                  listStyle: "disc",
-                  paddingLeft: 20,
-                  textAlign: "left",
-                  display: "inline-block",
-                }}
-              >
-                <li>
-                  <Link to="/" style={linkStyle}>
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/story" style={linkStyle}>
-                    Our Story
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/products" style={linkStyle}>
-                    Products
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/standards" style={linkStyle}>
-                    Our Standards
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/contact" style={linkStyle}>
-                    Contact Us
-                  </Link>
-                </li>
-              </ul>
-            </Col>
-          ))}
+         {[0, 1].map((colIndex) => (
+  <Col
+    xs={12}
+    md={4}
+    key={colIndex}
+    style={{
+      textAlign: "center",
+      marginBottom: 20,
+    }}
+  >
+    <h4
+      style={{
+        color: "#ffce00",
+        fontFamily: "Poppins, sans-serif",
+      }}
+    >
+      Quick Links
+    </h4>
+    <ul
+      style={{
+        listStyle: "disc",
+        paddingLeft: 20,
+        textAlign: "left",
+        display: "inline-block",
+      }}
+    >
+      {quickLinks
+        .slice(colIndex * Math.ceil(quickLinks.length / 2), (colIndex + 1) * Math.ceil(quickLinks.length / 2))
+        .map((link, i) => (
+          <li key={i}>
+            <Link to={link.path} style={linkStyle}>
+              {link.label}
+            </Link>
+          </li>
+        ))}
+    </ul>
+  </Col>
+))}
 
           {/* Newsletter */}
           <Col xs={24} md={8} style={{ textAlign: "center" }}>
@@ -201,28 +238,16 @@ const Footer = () => {
           fontFamily: "Poppins, sans-serif",
         }}
       >
-        <Link to="/contact" style={bottomLinkStyle}>
-          Contact Us
+        <Link to="/terms-and-conditions" style={bottomLinkStyle}>
+          Terms and Conditions
         </Link>{" "}
         |{" "}
-        <Link to="/privacy" style={{ ...bottomLinkStyle, marginLeft: 10 }}>
+        <Link to="/privacy-policy" style={{ ...bottomLinkStyle, marginLeft: 10 }}>
           Privacy Policy
         </Link>
       </div>
     </div>
   );
-};
-
-const linkStyle = {
-  color: "#fff",
-  textDecoration: "none",
-  fontFamily: "Poppins, sans-serif",
-};
-
-const bottomLinkStyle = {
-  color: "#000",
-  textDecoration: "none",
-  marginRight: 10,
 };
 
 export default Footer;

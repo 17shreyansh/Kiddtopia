@@ -35,6 +35,10 @@ import AdminBlogListPage from './admin/adminblogs';
 import AdminCreateBlogPage from './admin/AdminCreateBlogPage';
 import AdminEditBlogPage from './admin/AdminEditBlogPage';
 import Blog from './pages/Blog';
+import AdminBookings from './admin/adminBookings';
+import AdminNewsletter from './admin/AdminNewsletter';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 
 function App() {
@@ -54,9 +58,9 @@ function App() {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<Blog />} />
-
-          
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
 
 
@@ -80,6 +84,8 @@ function App() {
             <Route path="edit/gallery" element={<GalleryEdit />} />
             <Route path="forms/contact" element={<ContactLeads />} />
             <Route path="forms/franchise" element={<AdminFranchiseForms />} />
+            <Route path="forms/book" element={<AdminBookings />} />
+            <Route path="forms/newsletter" element={<AdminNewsletter />} />
             <Route path="blogs" element={<AdminBlogListPage />} />
             <Route path="blogs/create" element={<AdminCreateBlogPage />} />
             <Route path="blogs/edit/:identifier" element={<AdminEditBlogPage />} />

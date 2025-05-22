@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Layout, Breadcrumb, Table, Tag, Space, Badge, Input, Button, Modal,
-  Select, message, Statistic, Card, Row, Col, DatePicker
+  Select, message, Statistic, Card, Row, Col, DatePicker, Typography // Added Typography for Title
 } from 'antd';
 import {
   PhoneOutlined, MailOutlined, MessageOutlined, SearchOutlined,
@@ -15,6 +15,7 @@ const { Header, Content, Footer } = Layout;
 const { Search } = Input;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { Title } = Typography; // Destructure Title
 
 const ContactLeads = () => {
   const [leads, setLeads] = useState([]);
@@ -175,7 +176,7 @@ const ContactLeads = () => {
     {
       title: 'Date',
       dataIndex: 'createdAt',
-      render: date => moment(date).format('MMM DD, YYYY - h:mm A'),
+      render: date => moment(date).format('MMM DD, YYYY - h:mm A'), // Consistent format
     },
     {
       title: 'Actions',
@@ -194,19 +195,26 @@ const ContactLeads = () => {
   };
 
   return (
-    <Layout>
-      <Header style={{ padding: 0, background: '#fff' }} />
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{ padding: 0, background: '#fff' }}>
+        <Title level={3} style={{ margin: 0, paddingLeft: 24 }}>Contact Leads Admin</Title> {/* Added Title */}
+      </Header>
       <Content style={{ margin: '16px' }}>
+        <Breadcrumb style={{ marginBottom: 16 }}>
+          <Breadcrumb.Item>Admin</Breadcrumb.Item>
+          <Breadcrumb.Item>Contact Leads</Breadcrumb.Item>
+        </Breadcrumb>
+
         <Row gutter={16} style={{ marginBottom: 20 }}>
-          <Col span={6}><Card><Statistic title="Total Leads" value={statistics.total} prefix={<TeamOutlined />} /></Card></Col>
-          <Col span={6}><Card><Statistic title="New" value={statistics.new} prefix={<Badge status="processing" />} /></Card></Col>
-          <Col span={6}><Card><Statistic title="Contacted" value={statistics.contacted} prefix={<PhoneOutlined />} /></Card></Col>
-          <Col span={6}><Card><Statistic title="Closed" value={statistics.closed} prefix={<CheckOutlined />} /></Card></Col>
+          <Col xs={24} sm={12} md={6}><Card><Statistic title="Total Leads" value={statistics.total} prefix={<TeamOutlined />} /></Card></Col>
+          <Col xs={24} sm={12} md={6}><Card><Statistic title="New" value={statistics.new} prefix={<Badge status="processing" />} /></Card></Col>
+          <Col xs={24} sm={12} md={6}><Card><Statistic title="Contacted" value={statistics.contacted} prefix={<PhoneOutlined />} /></Card></Col>
+          <Col xs={24} sm={12} md={6}><Card><Statistic title="Closed" value={statistics.closed} prefix={<CheckOutlined />} /></Card></Col>
         </Row>
 
-        <div style={{ background: '#fff', padding: 24, marginBottom: 20, borderRadius: 4 }}>
-          <Row gutter={16} align="middle">
-            <Col span={8}>
+        <Card style={{ marginBottom: 24 }}> {/* Wrapped filter section in Card */}
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={12} md={8}>
               <Search
                 placeholder="Search by name, email, phone or message"
                 allowClear
@@ -215,7 +223,7 @@ const ContactLeads = () => {
                 onChange={e => setSearchText(e.target.value)}
               />
             </Col>
-            <Col span={6}>
+            <Col xs={24} sm={12} md={6}>
               <Select style={{ width: '100%' }} defaultValue="all" onChange={value => setStatusFilter(value)}>
                 <Option value="all">All</Option>
                 <Option value="new">New</Option>
@@ -223,16 +231,16 @@ const ContactLeads = () => {
                 <Option value="closed">Closed</Option>
               </Select>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <RangePicker style={{ width: '100%' }} onChange={setDateRange} />
             </Col>
-            <Col span={2}>
+            <Col xs={24} sm={12} md={2}>
               <Button icon={<SearchOutlined />} onClick={fetchLeads} type="primary" style={{ width: '100%' }}>
-                Reset
+                Refresh {/* Changed "Reset" to "Refresh" for consistency */}
               </Button>
             </Col>
           </Row>
-        </div>
+        </Card>
 
         <div style={{ background: '#fff', padding: 24, borderRadius: 4 }}>
           <Table
@@ -240,15 +248,16 @@ const ContactLeads = () => {
             dataSource={filteredLeads}
             rowKey="_id"
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            pagination={{ pageSize: 10, showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items` }}
           />
         </div>
       </Content>
 
+
       {currentLead && (
         <Modal
           title="Lead Details"
-          open={isModalVisible}
+          open={isModalVisible} // Use 'open' instead of 'visible'
           onCancel={() => setIsModalVisible(false)}
           width={600}
           footer={[

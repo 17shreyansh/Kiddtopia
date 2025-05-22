@@ -115,7 +115,7 @@ const AdminBlogListPage = () => {
     ];
 
     return (
-        <Card bordered={false}>
+        <Card >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <Title level={3} style={{ margin: 0 }}>Manage Blog Posts</Title>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/admin/blogs/create')}>

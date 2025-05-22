@@ -6,6 +6,8 @@ import AboutUs from '../components/About';
 import WaveFeatureBar from '../components/WaveFeatureBar';
 import ImageOverlay from '../components/Stars';
 
+const BASE_URL = process.env.REACT_APP_BACKEND_URL || '';
+
 const TopSection = ({ heading, children }) => {
   const [fontSize, setFontSize] = useState('3rem');
 
@@ -25,7 +27,7 @@ const TopSection = ({ heading, children }) => {
   return (
     <div style={{ position: 'relative', height: '50vh', marginTop: '64px', overflow: 'hidden' }}>
       <ImageOverlay
-        alt="Overlay 1"
+        alt="Decorative overlay left"
         top="25%"
         left="15%"
         rotate="0deg"
@@ -35,7 +37,7 @@ const TopSection = ({ heading, children }) => {
         overflow="visible"
       />
       <ImageOverlay
-        alt="Overlay 2"
+        alt="Decorative overlay right"
         top="25%"
         right="15%"
         rotate="0deg"
@@ -52,7 +54,7 @@ const TopSection = ({ heading, children }) => {
         <h1
           style={{
             position: 'absolute',
-            top: '5%',
+            top: '10%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
@@ -69,8 +71,8 @@ const TopSection = ({ heading, children }) => {
           bottom: '0',
           width: '80%',
           zIndex: 5,
-          left: '50%', /* Move the left edge to the center */
-          transform: 'translateX(-50%)', /* Move the element back by half its width */
+          left: '50%',
+          transform: 'translateX(-50%)',
           textAlign: 'center',
         }}
       >
@@ -83,10 +85,17 @@ const TopSection = ({ heading, children }) => {
 const About = () => {
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getAboutData = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/about`);
+      const res = await axios.get(`${BASE_URL}/api/about`);
       setAboutData(res.data);
     } catch (error) {
       console.error('Failed to fetch about data:', error);
@@ -99,6 +108,12 @@ const About = () => {
     getAboutData();
   }, []);
 
+  const getImageUrl = (src) => {
+    if (!src) return '';
+    if (src.startsWith('http')) return src;
+    return `${BASE_URL}${src}`;
+  };
+
   if (loading || !aboutData) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -107,18 +122,12 @@ const About = () => {
     );
   }
 
-  // Assuming the base URL for images should be the same as the backend URL
-  const getImageUrl = (src) => {
-    const baseUrl = process.env.REACT_APP_BACKEND_URL; // Set your server base URL here
-    return `${baseUrl}${src}`;
-  };
-
   return (
     <div style={{ overflow: 'hidden' }}>
       <TopSection heading={aboutData.heading} />
 
       <ImageOverlay
-        alt="Overlay 1"
+        alt="Decorative overlay bottom left"
         top="70%"
         left="-10%"
         rotate="-20deg"
@@ -127,23 +136,23 @@ const About = () => {
         zIndex={0}
       />
 
-      <h2 style={{ textAlign: 'center', fontSize: '40px', marginBottom: '20px' }}>
+      <h2 style={{ textAlign: 'center', fontSize: isMobile ? '25px' : '40px', marginBottom: '20px' }}>
         {aboutData.mainTitle}
       </h2>
 
       <AboutUs
         title=""
-        paragraphs={aboutData.firstSection.paragraphs}
-        images={aboutData.firstSection.images.map((image) => ({
+        paragraphs={aboutData?.firstSection?.paragraphs || []}
+        images={(aboutData?.firstSection?.images || []).map((image) => ({
           ...image,
-          src: getImageUrl(image.src), // Update the image src to use the correct base URL
+          src: getImageUrl(image.src),
         }))}
         reverse={false}
         align="left"
       />
 
       <ImageOverlay
-        alt="Overlay 2"
+        alt="Decorative overlay mid right"
         top="55%"
         left="80%"
         rotate="-20deg"
@@ -156,10 +165,10 @@ const About = () => {
 
       <AboutUs
         title=""
-        paragraphs={aboutData.secondSection.paragraphs}
-        images={aboutData.secondSection.images.map((image) => ({
+        paragraphs={aboutData?.secondSection?.paragraphs || []}
+        images={(aboutData?.secondSection?.images || []).map((image) => ({
           ...image,
-          src: getImageUrl(image.src), // Update the image src to use the correct base URL
+          src: getImageUrl(image.src),
         }))}
         reverse={true}
         align="left"
@@ -167,7 +176,6 @@ const About = () => {
     </div>
   );
 };
-
 
 export default About;
 export { TopSection };

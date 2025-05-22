@@ -12,6 +12,8 @@ const galleryRoutes = require('./routes/galleryroutes');
 const contactRoutes = require('./routes/contactRoutes');
 const franchiseFormRoutes = require('./routes/franchiseFormRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const bookingRoutes = require('./routes/bookings');
+const newsletter = require('./routes/newsletter');
 
 
 
@@ -56,8 +58,9 @@ app.use('/api/gallery', galleryRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/franchiseforms', franchiseFormRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/newsletter', newsletter);
 
-  
 
 // Test route to check if the file is being uploaded
 app.post('/upload', upload.single('image'), (req, res) => {

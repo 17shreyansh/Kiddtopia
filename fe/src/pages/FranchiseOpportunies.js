@@ -4,7 +4,7 @@ import axios from "axios";
 import { TopSection } from "./About";
 import Wave3 from "../components/Wave3";
 import KiddtopiaFranchise from "../components/FranchiseModels";
-import Reviews from "../components/Reviews";
+import Testimonials from "../components/Testimonials";
 
 const { Paragraph } = Typography;
 
@@ -143,7 +143,7 @@ const Franchise = () => {
       </div>
       <Wave3 />
       <KiddtopiaFranchise />
-      <Reviews />
+      <Testimonials />
     </>
   );
 };

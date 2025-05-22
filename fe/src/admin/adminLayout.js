@@ -82,6 +82,12 @@ const AdminLayout = () => {
             <Menu.Item key="/admin/forms/franchise" icon={<SolutionOutlined />}>
               <Link to="/admin/forms/franchise">Franchise Registration</Link>
             </Menu.Item>
+             <Menu.Item key="/admin/forms/book" icon={<SolutionOutlined />}>
+              <Link to="/admin/forms/book">Party Booking</Link>
+            </Menu.Item>
+             <Menu.Item key="/admin/forms/newsletter" icon={<SolutionOutlined />}>
+              <Link to="/admin/forms/newsletter">Newsletter</Link>
+            </Menu.Item>
           </SubMenu>
 
           <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
