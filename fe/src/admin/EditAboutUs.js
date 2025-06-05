@@ -7,7 +7,6 @@ import {
   Input,
   List,
   Card,
-  Space,
   Image,
   Typography,
   Divider,
@@ -49,7 +48,7 @@ const sectionOptions = [
 ];
 
 const dummyUploadProps = {
-  beforeUpload: () => false,
+  beforeUpload: () => false, // Prevents Ant Design's Upload component from uploading directly
   multiple: false,
 };
 
@@ -86,19 +85,28 @@ const Toast = ({ message, type, onClose }) => {
   );
 };
 
+// Helper function to get default section data
 const getDefaultSection = (sectionName) => {
+  const defaultImage = (sectionKey) => ({
+    src: `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`, // Placeholder URL
+    alt: `Kiddtopia ${sectionKey === 'firstSection' ? 'play area' : 'activities'}`,
+    cloudinaryPublicId: undefined, // Default to undefined
+  });
+
   switch (sectionName) {
     case 'Header':
       return { mainTitle: '' };
     case 'First Section':
+      return {
+        heading: '',
+        paragraphs: [],
+        images: Array(4).fill(null).map(() => defaultImage('firstSection')), // Use map to create distinct objects
+      };
     case 'Second Section':
       return {
         heading: '',
         paragraphs: [],
-        images: Array(4).fill().map(() => ({
-          src: `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`,
-          alt: `Kiddtopia ${sectionName === 'First Section' ? 'play area' : 'activities'}`,
-        })),
+        images: Array(4).fill(null).map(() => defaultImage('secondSection')), // Use map to create distinct objects
       };
     default:
       return {};
@@ -116,16 +124,7 @@ const AboutEdit = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-      showToast('Please log in to edit content', 'error');
-      navigate('/login');
-    }
-  }, [token, navigate]);
-
+  // Moved showToast and hideToast definitions here to resolve "used before defined" warning
   const showToast = useCallback((message, type = 'success') => {
     setToast({ visible: true, message, type });
   }, []);
@@ -134,16 +133,32 @@ const AboutEdit = () => {
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => { // Wrapped fetchData in useCallback
     setLoading(true);
     try {
       const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/about`);
+      // Ensure fetched images array is always 4 elements long and has publicId
+      const firstSectionImages = res.data.firstSection.images || [];
+      const secondSectionImages = res.data.secondSection.images || [];
+
+      // Fill with default images if less than 4, or ensure publicId is present
+      const ensureImageStructure = (images, sectionKey) => {
+        const defaultImage = (idx) => ({
+          src: `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`,
+          alt: `Kiddtopia ${sectionKey === 'firstSection' ? 'play area' : 'activities'} ${idx + 1}`,
+          cloudinaryPublicId: undefined,
+        });
+
+        return Array(4).fill(null).map((_, idx) => {
+          const img = images[idx];
+          return img ? {
+            src: img.src,
+            alt: img.alt,
+            cloudinaryPublicId: img.cloudinaryPublicId, // Ensure publicId is pulled
+          } : defaultImage(idx);
+        });
+      };
+
       setContentData({
         Header: {
           mainTitle: res.data.mainTitle,
@@ -151,18 +166,18 @@ const AboutEdit = () => {
         'First Section': {
           heading: res.data.firstSection.heading,
           paragraphs: res.data.firstSection.paragraphs,
-          images: res.data.firstSection.images,
+          images: ensureImageStructure(firstSectionImages, 'firstSection'),
         },
         'Second Section': {
           heading: res.data.secondSection.heading,
           paragraphs: res.data.secondSection.paragraphs,
-          images: res.data.secondSection.images,
+          images: ensureImageStructure(secondSectionImages, 'secondSection'),
         },
       });
     } catch (err) {
       if (err.response?.status === 404) {
         setContentData({
-          Header: { mainTitle: '' },
+          Header: getDefaultSection('Header'),
           'First Section': getDefaultSection('First Section'),
           'Second Section': getDefaultSection('Second Section'),
         });
@@ -173,48 +188,113 @@ const AboutEdit = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]); // Added showToast to fetchData's dependencies
+
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchData(); // Call fetchData here
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+      showToast('Please log in to edit content', 'error');
+      navigate('/login');
+    }
+  }, [token, navigate, showToast, fetchData]); // Added fetchData to useEffect's dependencies
 
   const handleSave = async () => {
     setLoading(true);
     const data = contentData[selectedSection] || getDefaultSection(selectedSection);
+    const sectionKey = selectedSection === 'First Section' ? 'firstSection' : 'secondSection'; // Define sectionKey outside if/else
 
     try {
       if (selectedSection === 'Header') {
         const res = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/about/header`, {
           mainTitle: data.mainTitle,
         });
+        // Update entire contentData because header update affects other sections as well
         setContentData((prev) => ({
           ...prev,
           Header: { mainTitle: res.data.mainTitle },
-          'First Section': res.data.firstSection,
-          'Second Section': res.data.secondSection,
+          'First Section': {
+            heading: res.data.firstSection.heading,
+            paragraphs: res.data.firstSection.paragraphs,
+            images: res.data.firstSection.images,
+          },
+          'Second Section': {
+            heading: res.data.secondSection.heading,
+            paragraphs: res.data.secondSection.paragraphs,
+            images: res.data.secondSection.images,
+          },
         }));
         showToast('Header updated successfully');
       } else {
+        // Handle paragraphs update first
         const filteredParagraphs = data.paragraphs.filter(p => p.trim() !== '');
         if (filteredParagraphs.length === 0) {
           showToast('At least one non-empty paragraph is required', 'error');
           setLoading(false);
           return;
         }
-        const sectionKey = selectedSection === 'First Section' ? 'firstSection' : 'secondSection';
         await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/about/paragraphs/${sectionKey}`, {
           heading: data.heading,
           paragraphs: filteredParagraphs,
         });
-        if (imageFile && imageIndex !== null) {
-          const formData = new FormData();
-          formData.append('image', imageFile);
-          await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/about/image/${sectionKey}/${imageIndex}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-        }
-        await fetchData();
-        showToast(`${selectedSection} updated successfully`);
-        setImageFile(null);
-        setImageIndex(null);
+        showToast(`${selectedSection} paragraphs updated successfully`); // Give feedback for paragraphs
       }
+
+      // --- NEW: Handle image upload separately if a file is selected ---
+      if (imageFile && imageIndex !== null) {
+        showToast('Uploading image to Cloudinary...'); // Provide feedback for image upload
+
+        const formData = new FormData();
+        formData.append('image', imageFile); // 'image' matches the Multer field name in server.js
+
+        // Step 1: Upload the raw image file to your centralized /uploads endpoint
+        const uploadResponse = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/uploads`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Crucial for file uploads
+          },
+        });
+
+        if (!uploadResponse.data.success) {
+          showToast(`Image upload failed: ${uploadResponse.data.message}`, 'error');
+          setLoading(false);
+          return;
+        }
+
+        const { url: cloudinaryImageUrl, publicId: cloudinaryPublicId } = uploadResponse.data;
+        showToast('Image uploaded to Cloudinary. Updating database...');
+
+        // Step 2: Send the Cloudinary URL and publicId to your specific image update route
+        const updateImagePayload = {
+          imageUrl: cloudinaryImageUrl,
+          cloudinaryPublicId: cloudinaryPublicId,
+          // You might have a separate alt text input, or derive it here
+          alt: contentData[selectedSection].images[imageIndex]?.alt ||
+               (sectionKey === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities'),
+        };
+
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/about/image/${sectionKey}/${imageIndex}`,
+          updateImagePayload,
+          {
+            headers: {
+              'Content-Type': 'application/json', // Crucial for JSON payload
+            },
+          }
+        );
+        showToast('Image and section content updated successfully!'); // Combined success message
+      } else if (selectedSection !== 'Header') {
+        // If no image file selected but it's a section with images,
+        // and we only updated paragraphs or headings, provide a success message.
+        showToast(`${selectedSection} content updated successfully (no image change).`);
+      }
+
+
+      await fetchData(); // Re-fetch data to reflect all changes from backend
+      setImageFile(null); // Clear selected image file
+      setImageIndex(null); // Clear selected image index
+
     } catch (err) {
       showToast(err.response?.data?.message || `Error: ${err.message}`, 'error');
     } finally {
@@ -240,17 +320,36 @@ const AboutEdit = () => {
             showToast('Paragraph deleted successfully');
           } else if (itemType === 'image') {
             const sectionKey = selectedSection === 'First Section' ? 'firstSection' : 'secondSection';
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/about/image/${sectionKey}/${index}`);
+            const imageToDelete = data.images[index];
+
+            // If the image has a Cloudinary public ID, attempt to delete it from Cloudinary
+            if (imageToDelete && imageToDelete.cloudinaryPublicId) {
+              try {
+                // IMPORTANT: Your backend DELETE route for images should handle Cloudinary deletion
+                // The /api/about/image/:section/:index DELETE route is already set up in server.js to call Cloudinary.
+                await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/about/image/${sectionKey}/${index}`);
+                showToast('Image deleted from Cloudinary and reset in database.');
+              } catch (cloudinaryErr) {
+                console.error(`Error deleting image from Cloudinary (${imageToDelete.cloudinaryPublicId}):`, cloudinaryErr.response?.data?.message || cloudinaryErr.message);
+                showToast(`Failed to delete image from Cloudinary: ${cloudinaryErr.response?.data?.message || cloudinaryErr.message}`, 'error');
+                // Even if Cloudinary deletion fails, we proceed to reset the image in the UI/DB
+              }
+            } else {
+              // If no publicId, just reset the image in the database
+              await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/about/image/${sectionKey}/${index}`);
+              showToast('Image reset in database successfully.');
+            }
+
+            // Update local state to reflect the reset image immediately
             const updatedImages = [...data.images];
+            const defaultImg = getDefaultSection(selectedSection).images[index]; // Get a fresh default
             updatedImages[index] = {
-              src: `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`,
-              alt: `Kiddtopia ${sectionKey === 'firstSection' ? 'play area' : 'activities'}`,
+              src: defaultImg.src,
+              alt: defaultImg.alt,
+              cloudinaryPublicId: undefined, // Ensure publicId is cleared
             };
-            updateSectionData(selectedSection, {
-              ...data,
-              images: updatedImages,
-            });
-            showToast('Image reset successfully');
+            updateSectionData(selectedSection, { ...data, images: updatedImages });
+            await fetchData(); // Re-fetch to ensure consistency with DB
           }
         } catch (err) {
           showToast(err.response?.data?.message || 'Failed to delete item', 'error');
@@ -285,9 +384,14 @@ const AboutEdit = () => {
                   {idx + 1}
                 </div>
                 <Image
-                  src={img.src.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${img.src}` : img.src}
+                  src={img.src} // Use the src directly, as it will be Cloudinary URL
                   style={{ objectFit: 'cover', width: '100%', height: '200px' }}
                   preview={{ mask: 'View' }}
+                  // Add onerror for fallback, though Cloudinary should handle well
+                  onError={(e) => {
+                    e.target.onerror = null; // Prevent infinite loop
+                    e.target.src = `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`;
+                  }}
                 />
               </div>
             }
@@ -295,22 +399,28 @@ const AboutEdit = () => {
               <Upload
                 {...dummyUploadProps}
                 onChange={({ fileList }) => {
-                  setImageFile(fileList[0]?.originFileObj);
-                  setImageIndex(idx);
+                  if (fileList.length > 0) {
+                    setImageFile(fileList[0].originFileObj);
+                    setImageIndex(idx);
+                  } else {
+                    setImageFile(null);
+                    setImageIndex(null);
+                  }
                 }}
-                fileList={imageFile && imageIndex === idx ? [{ uid: '-1', name: imageFile.name }] : []}
-                onRemove={() => {
+                fileList={imageFile && imageIndex === idx ? [{ uid: '-1', name: imageFile.name, status: 'done' }] : []}
+                onRemove={() => { // Clear file input selection if user removes it
                   setImageFile(null);
                   setImageIndex(null);
                 }}
                 listType="picture"
               >
-                <UploadOutlined />
+                <UploadOutlined /> Upload
               </Upload>,
               <Button
                 icon={<DeleteOutlined />}
                 style={{ color: 'red' }}
                 onClick={() => handleDeleteItem('image', idx)}
+                // Disable if it's already the default placeholder image
                 disabled={img.src === `${process.env.REACT_APP_BACKEND_URL}/default-about-image.jpg`}
               />,
             ]}

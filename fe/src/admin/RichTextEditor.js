@@ -37,8 +37,7 @@ const MenuBar = ({ editor }) => {
                     message.loading({ content: 'Uploading image...', key: 'editorImageUpload', duration: 0 });
                     const response = await uploadEditorImage(formData);
                     if (response.success && response.data.imageUrl) {
-                        // response.data.imageUrl is like '/uploads/blogs/image.jpg'
-                        const fullImageUrl = API_BASE_URL + response.data.imageUrl;
+                        const fullImageUrl =  response.data.imageUrl;
                         editor.chain().focus().setImage({ src: fullImageUrl }).run();
                         message.success({ content: 'Image uploaded!', key: 'editorImageUpload', duration: 2 });
                     } else {

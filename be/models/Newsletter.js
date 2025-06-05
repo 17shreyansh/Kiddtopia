@@ -43,8 +43,7 @@ const newsletterSchema = new mongoose.Schema({
   timestamps: true // This adds createdAt and updatedAt automatically
 });
 
-// Only use schema.index() method, remove individual index: true declarations
-newsletterSchema.index({ email: 1 });
+
 newsletterSchema.index({ isActive: 1 });
 newsletterSchema.index({ createdAt: -1 });
 

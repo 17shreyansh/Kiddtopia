@@ -1,42 +1,74 @@
 const express = require('express');
 const router = express.Router();
-const AboutUs = require('../models/AboutUs');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const AboutUs = require('../models/AboutUs'); // Ensure your AboutUs model is correctly imported
 const auth = require('../middleware/authMiddleware');
+// --- Import Cloudinary for the DELETE route if you plan to delete from Cloudinary ---
+const cloudinary = require('cloudinary').v2; // Make sure Cloudinary is configured in server.js
+// You might need to add `require('dotenv').config();` here too if your Cloudinary config isn't
+// globally available via server.js or if you want to use it for deletion directly in this file.
+// However, if cloudinary.config is already done in server.js, it might be accessible.
+// For safety, you can add:
+// require('dotenv').config();
 
-// Configure storage for multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/about';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `about-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5000000 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|webp/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+// --- REMOVE MULTER CONFIGURATION FROM HERE ---
+// const multer = require('multer');
+// const path = require('path');
+// const fs = require('fs');
+// const storage = multer.diskStorage({ ... });
+// const upload = multer({ ... });
+// --- END REMOVAL ---
 
-    if (mimetype && extname) {
-      return cb(null, true);
+// --- IMPORTANT: Your AboutUs model should now have fields for Cloudinary URLs ---
+// Example (refer to previous guidance on updating models):
+// const AboutUs = mongoose.model('AboutUs', new mongoose.Schema({
+//   imageUrl: String,
+//   cloudinaryPublicId: String,
+//   // ... other fields
+// }));
+
+// @route   POST /api/about
+// @desc    Create/Update About Us content with image
+// @access  Private (auth middleware should be used)
+// IMPORTANT: This route now expects the Cloudinary URL and publicId directly in the request body,
+// NOT a file upload. The file upload happens via the central /uploads route first.
+router.post('/', auth, async (req, res) => {
+  // Destructure the Cloudinary URL and publicId from the request body,
+  // along with any other form data.
+  const { title, content, imageUrl, cloudinaryPublicId } = req.body;
+
+  try {
+    // Find an existing About Us document or create a new one
+    // Assuming you usually have only one About Us page
+    let aboutUs = await AboutUs.findOne();
+
+    if (aboutUs) {
+      // Update existing content
+      aboutUs.title = title || aboutUs.title;
+      aboutUs.content = content || aboutUs.content;
+      aboutUs.imageUrl = imageUrl || aboutUs.imageUrl; // Update with new Cloudinary URL
+      aboutUs.cloudinaryPublicId = cloudinaryPublicId || aboutUs.cloudinaryPublicId; // Update publicId
     } else {
-      cb(new Error('Images only! Only JPEG, JPG, PNG, or WebP files are allowed.'));
+      // Create new content
+      aboutUs = new AboutUs({
+        title,
+        content,
+        imageUrl,
+        cloudinaryPublicId,
+      });
     }
-  },
+
+    await aboutUs.save();
+    res.status(200).json(aboutUs);
+  } catch (error) {
+    console.error('Error saving About Us content:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 });
 
-// Get about us data
+// @route   GET /api/about
+// @desc    Get About Us content
+// @access  Public
 router.get('/', async (req, res) => {
   try {
     const aboutUs = await AboutUs.findOne();
@@ -50,7 +82,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Update heading and mainTitle
+// @route   PUT /api/about/header
+// @desc    Update heading and mainTitle
+// @access  Private (auth middleware should be used)
 router.put('/header', auth, async (req, res) => {
   try {
     const { firstHeading, secondHeading, mainTitle } = req.body;
@@ -63,7 +97,7 @@ router.put('/header', auth, async (req, res) => {
           heading: firstHeading || 'ABOUT US',
           paragraphs: [],
           images: Array(4).fill().map(() => ({
-            src: '/default-about-image.jpg',
+            src: '/default-about-image.jpg', // These should be updated by migration script later
             alt: 'Kiddtopia play area',
           })),
         },
@@ -71,7 +105,7 @@ router.put('/header', auth, async (req, res) => {
           heading: secondHeading || '',
           paragraphs: [],
           images: Array(4).fill().map(() => ({
-            src: '/default-about-image.jpg',
+            src: '/default-about-image.jpg', // These should be updated by migration script later
             alt: 'Kiddtopia activities',
           })),
         },
@@ -95,7 +129,9 @@ router.put('/header', auth, async (req, res) => {
   }
 });
 
-// Update paragraphs
+// @route   PUT /api/about/paragraphs/:section
+// @desc    Update paragraphs for a section
+// @access  Private (auth middleware should be used)
 router.put('/paragraphs/:section', auth, async (req, res) => {
   try {
     const { section } = req.params;
@@ -151,11 +187,17 @@ router.put('/paragraphs/:section', auth, async (req, res) => {
   }
 });
 
-// Upload image
-router.post('/image/:section/:index', auth, upload.single('image'), async (req, res) => {
+// @route   POST /api/about/image/:section/:index
+// @desc    Upload image to a specific section and index
+// @access  Private (auth middleware should be used)
+// IMPORTANT: This route now expects the Cloudinary URL and publicId directly in the request body,
+// NOT a file upload via Multer. The file upload happens via the central /uploads route first.
+router.post('/image/:section/:index', auth, async (req, res) => {
   try {
     const { section, index } = req.params;
     const idx = parseInt(index, 10);
+    // Expect imageUrl and cloudinaryPublicId from the request body
+    const { imageUrl, cloudinaryPublicId, alt } = req.body; // Line 194 in your error
 
     if (!['firstSection', 'secondSection'].includes(section)) {
       return res.status(400).json({ message: 'Invalid section' });
@@ -163,14 +205,19 @@ router.post('/image/:section/:index', auth, upload.single('image'), async (req, 
     if (isNaN(idx) || idx < 0 || idx >= 4) {
       return res.status(400).json({ message: 'Invalid image index (must be 0-3)' });
     }
-    if (!req.file) {
-      return res.status(400).json({ message: 'No image uploaded' });
+    // Check if Cloudinary URL is provided
+    if (!imageUrl) {
+      return res.status(400).json({ message: 'Cloudinary image URL is required.' });
     }
-
-    const imageUrl = `/uploads/about/${req.file.filename}`;
+    // cloudinaryPublicId is highly recommended but not strictly required by this route if not used for deletion
+    // if (!cloudinaryPublicId) {
+    //   return res.status(400).json({ message: 'Cloudinary public ID is required.' });
+    // }
 
     let aboutUs = await AboutUs.findOne();
     if (!aboutUs) {
+      // If no AboutUs document exists, create a new one with default values
+      // and update the specific image
       aboutUs = new AboutUs({
         mainTitle: 'Kiddtopia: A Premium Adventure for Kids',
         firstSection: {
@@ -190,32 +237,22 @@ router.post('/image/:section/:index', auth, upload.single('image'), async (req, 
           })),
         },
       });
-      if (section === 'firstSection') {
-        aboutUs.firstSection.images[idx] = {
-          src: imageUrl,
-          alt: req.body.alt || 'Kiddtopia play area',
-        };
-      } else {
-        aboutUs.secondSection.images[idx] = {
-          src: imageUrl,
-          alt: req.body.alt || 'Kiddtopia activities',
-        };
-      }
-    } else {
-      // Ensure the images array has exactly 4 elements
-      if (!aboutUs[section].images || aboutUs[section].images.length < 4) {
-        aboutUs[section].images = Array(4).fill().map(() => ({
-          src: '/default-about-image.jpg',
-          alt: section === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities',
-        }));
-      }
-
-      // Update the image at the specified index
-      aboutUs[section].images[idx] = {
-        src: imageUrl,
-        alt: req.body.alt || (section === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities'),
-      };
     }
+
+    // Ensure the images array has exactly 4 elements
+    if (!aboutUs[section].images || aboutUs[section].images.length < 4) {
+      aboutUs[section].images = Array(4).fill().map(() => ({
+        src: '/default-about-image.jpg',
+        alt: section === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities',
+      }));
+    }
+
+    // Update the image at the specified index with Cloudinary data
+    aboutUs[section].images[idx] = {
+      src: imageUrl,
+      alt: alt || (section === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities'),
+      cloudinaryPublicId: cloudinaryPublicId || undefined, // Store publicId if provided
+    };
 
     aboutUs.lastUpdated = Date.now();
     await aboutUs.save();
@@ -223,14 +260,13 @@ router.post('/image/:section/:index', auth, upload.single('image'), async (req, 
     res.json({ success: true, imageUrl, aboutUs });
   } catch (err) {
     console.error(err);
-    if (err.message === 'Images only! Only JPEG, JPG, PNG, or WebP files are allowed.') {
-      return res.status(400).json({ message: err.message });
-    }
     res.status(500).json({ message: 'Server Error' });
   }
 });
 
-// Delete image
+// @route   DELETE /api/about/image/:section/:index
+// @desc    Delete image from a specific section and index (and from Cloudinary if stored)
+// @access  Private (auth middleware should be used)
 router.delete('/image/:section/:index', auth, async (req, res) => {
   try {
     const { section, index } = req.params;
@@ -256,10 +292,24 @@ router.delete('/image/:section/:index', auth, async (req, res) => {
       }));
     }
 
-    // Reset the image at the specified index to default
+    const imageToDelete = aboutUs[section].images[idx];
+
+    // Optional: Delete image from Cloudinary if publicId is stored
+    if (imageToDelete && imageToDelete.cloudinaryPublicId) {
+      try {
+        await cloudinary.uploader.destroy(imageToDelete.cloudinaryPublicId);
+        console.log(`Deleted image from Cloudinary: ${imageToDelete.cloudinaryPublicId}`);
+      } catch (cloudinaryErr) {
+        console.error(`Error deleting image from Cloudinary (${imageToDelete.cloudinaryPublicId}):`, cloudinaryErr.message);
+        // Do not block deletion from MongoDB even if Cloudinary fails
+      }
+    }
+
+    // Reset the image at the specified index to default placeholder
     aboutUs[section].images[idx] = {
       src: '/default-about-image.jpg',
       alt: section === 'firstSection' ? 'Kiddtopia play area' : 'Kiddtopia activities',
+      cloudinaryPublicId: undefined, // Clear publicId
     };
 
     aboutUs.lastUpdated = Date.now();

@@ -95,7 +95,7 @@ const Service = () => {
         title={card.title}
         description={card.description}
         isMobile={isMobile}
-        image={`${process.env.REACT_APP_BACKEND_URL}/uploads/${card.image}`}
+        image={`${card.image.src}`}
       />
     ));
 

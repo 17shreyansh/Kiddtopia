@@ -3,24 +3,29 @@ const mongoose = require('mongoose');
 const BlogPost = require('../models/BlogPost');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const auth = require('../middleware/authMiddleware');
+const fs = require('fs'); // Still needed for temporary file deletion
+const cloudinary = require('cloudinary').v2;
+const auth = require('../middleware/authMiddleware'); // Assuming this path is correct
 
-const BASE_UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
-const BLOG_IMAGES_SUBDIR = 'blogs';
-const BLOG_UPLOADS_DIR = path.join(BASE_UPLOADS_DIR, BLOG_IMAGES_SUBDIR);
+// Configure Cloudinary (Replace with your actual Cloudinary credentials or environment variables)
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Ensure directories exist
-if (!fs.existsSync(BASE_UPLOADS_DIR)) {
-    fs.mkdirSync(BASE_UPLOADS_DIR, { recursive: true });
-}
-if (!fs.existsSync(BLOG_UPLOADS_DIR)) {
-    fs.mkdirSync(BLOG_UPLOADS_DIR, { recursive: true });
+// Configure Multer for temporary disk storage
+// We will upload from disk to Cloudinary and then delete the local file.
+const UPLOADS_TEMP_DIR = path.join(__dirname, '..', 'temp_uploads');
+
+// Ensure temporary directory exists
+if (!fs.existsSync(UPLOADS_TEMP_DIR)) {
+    fs.mkdirSync(UPLOADS_TEMP_DIR, { recursive: true });
 }
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, BLOG_UPLOADS_DIR);
+        cb(null, UPLOADS_TEMP_DIR);
     },
     filename: function (req, file, cb) {
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
@@ -52,7 +57,7 @@ const handleError = (res, error, statusCode = 500) => {
         return res.status(400).json({ success: false, message: "Validation Error", errors: messages });
     }
     if (error.code === 11000) {
-        return res.status(409).json({ success: false, message: "Duplicate key error. A blog post with this title/slug may already exist."});
+        return res.status(409).json({ success: false, message: "Duplicate key error. A blog post with this title/slug may already exist." });
     }
     if (error instanceof multer.MulterError) {
         return res.status(400).json({ success: false, message: `File upload error: ${error.message}` });
@@ -63,16 +68,45 @@ const handleError = (res, error, statusCode = 500) => {
     return res.status(statusCode).json({ success: false, message: error.message || 'Server Error' });
 };
 
-const deleteImageFile = (filenameWithSubdirectory) => {
-    if (!filenameWithSubdirectory) return;
-    const imagePath = path.join(BASE_UPLOADS_DIR, filenameWithSubdirectory);
-    if (fs.existsSync(imagePath)) {
-        fs.unlink(imagePath, (err) => {
-            if (err) console.error(`Error deleting image file ${filenameWithSubdirectory}:`, err);
-            else console.log(`Image file ${filenameWithSubdirectory} deleted.`);
+// Utility to delete a local temporary file
+const deleteLocalFile = (filePath) => {
+    if (filePath && fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) console.error(`Error deleting local temporary file ${filePath}:`, err);
+            else console.log(`Local temporary file ${filePath} deleted.`);
         });
-    } else {
-        console.log(`Image file ${filenameWithSubdirectory} not found for deletion.`);
+    }
+};
+
+// Utility to delete image from Cloudinary
+const deleteImageFromCloudinary = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    try {
+        const urlParts = imageUrl.split('/');
+        // Find the index of 'upload' which usually precedes version and public_id
+        const uploadIndex = urlParts.indexOf('upload');
+        if (uploadIndex === -1 || urlParts.length <= uploadIndex + 1) {
+            console.error(`Invalid Cloudinary URL format for deletion: ${imageUrl}`);
+            return;
+        }
+
+        // The public_id is usually the part after the version, before the file extension
+        // and includes any folder path specified during upload.
+        // Example: .../upload/v12345/folder/image_name.jpg
+        const publicIdWithExtension = urlParts.slice(uploadIndex + 2).join('/'); // Get everything after 'upload/vXXX'
+        const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
+
+        console.log(`Attempting to delete Cloudinary image with public_id: ${publicId}`);
+        const result = await cloudinary.uploader.destroy(publicId);
+
+        if (result.result === 'ok') {
+            console.log(`Cloudinary image ${publicId} deleted successfully.`);
+        } else {
+            console.error(`Error deleting Cloudinary image ${publicId}:`, result);
+        }
+    } catch (err) {
+        console.error(`Error during Cloudinary image deletion for URL ${imageUrl}:`, err);
     }
 };
 
@@ -80,18 +114,28 @@ const deleteImageFile = (filenameWithSubdirectory) => {
 
 // CREATE a new blog post (protected)
 router.post('/', auth, upload.single('mainImage'), async (req, res) => {
+    let uploadedCloudinaryUrl = null; // To keep track for cleanup
     try {
         const { title, content, author, status, metaTitle, metaDescription, slug } = req.body;
 
         if (!title || !content) {
+            if (req.file && req.file.path) {
+                deleteLocalFile(req.file.path); // Clean up local temp file
+            }
             return res.status(400).json({ success: false, message: 'Title and content are required.' });
         }
 
         const postData = { title, content, author, status, metaTitle, metaDescription, slug };
 
         if (req.file) {
-            postData.mainImage = `${BLOG_IMAGES_SUBDIR}/${req.file.filename}`;
-            console.log('Main image uploaded, path stored:', postData.mainImage);
+            console.log('Uploading main image to Cloudinary from local path:', req.file.path);
+            const cloudinaryUploadResult = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'blog_images' // Specify a folder in Cloudinary
+            });
+            uploadedCloudinaryUrl = cloudinaryUploadResult.secure_url;
+            postData.mainImage = uploadedCloudinaryUrl;
+            console.log('Main image uploaded to Cloudinary, URL stored:', postData.mainImage);
+            deleteLocalFile(req.file.path); // Clean up local temporary file after successful upload
         } else {
             console.log('No main image uploaded for new post.');
         }
@@ -100,6 +144,13 @@ router.post('/', auth, upload.single('mainImage'), async (req, res) => {
         const savedPost = await newBlogPost.save();
         res.status(201).json({ success: true, message: 'Blog post created successfully.', data: savedPost });
     } catch (error) {
+        // If an error occurs during save, clean up locally uploaded file and Cloudinary image if uploaded
+        if (req.file && req.file.path) {
+            deleteLocalFile(req.file.path);
+        }
+        if (uploadedCloudinaryUrl) {
+            await deleteImageFromCloudinary(uploadedCloudinaryUrl); // Rollback Cloudinary upload
+        }
         handleError(res, error);
     }
 });
@@ -136,6 +187,7 @@ router.get('/:identifier', async (req, res) => {
 
 // UPDATE blog post by ID or slug (protected)
 router.put('/:identifier', auth, upload.single('mainImage'), async (req, res) => {
+    let uploadedCloudinaryUrl = null; // To keep track for cleanup
     try {
         const { identifier } = req.params;
         const { title, content, author, status, metaTitle, metaDescription, slug } = req.body;
@@ -149,27 +201,48 @@ router.put('/:identifier', auth, upload.single('mainImage'), async (req, res) =>
 
         const postToUpdate = await BlogPost.findOne(query);
         if (!postToUpdate) {
+            if (req.file && req.file.path) {
+                deleteLocalFile(req.file.path); // Clean up local temp file
+            }
             return res.status(404).json({ success: false, message: 'Blog post not found for update.' });
         }
 
         const updateData = { title, content, author, status, metaTitle, metaDescription, slug };
 
         if (req.file) {
-            console.log('New main image uploaded for update:', req.file.filename);
-            deleteImageFile(postToUpdate.mainImage);
-            updateData.mainImage = `${BLOG_IMAGES_SUBDIR}/${req.file.filename}`;
+            console.log('New main image uploaded to Cloudinary from local path:', req.file.path);
+            // Delete old image from Cloudinary if it exists
+            if (postToUpdate.mainImage) {
+                await deleteImageFromCloudinary(postToUpdate.mainImage);
+            }
+            const cloudinaryUploadResult = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'blog_images' // Specify a folder in Cloudinary
+            });
+            uploadedCloudinaryUrl = cloudinaryUploadResult.secure_url;
+            updateData.mainImage = uploadedCloudinaryUrl; // New Cloudinary URL
+            deleteLocalFile(req.file.path); // Clean up local temporary file after successful upload
         } else if (req.body.mainImage === '' || req.body.mainImage === null) {
             console.log('Main image marked for removal during update.');
-            deleteImageFile(postToUpdate.mainImage);
-            updateData.mainImage = null;
+            // Delete old image from Cloudinary if it exists
+            if (postToUpdate.mainImage) {
+                await deleteImageFromCloudinary(postToUpdate.mainImage);
+            }
+            updateData.mainImage = null; // Set to null in DB
         } else {
-            console.log('Main image not changed during update.');
-            updateData.mainImage = postToUpdate.mainImage;
+            console.log('Main image not changed during update, retaining existing URL.');
+            updateData.mainImage = postToUpdate.mainImage; // Retain existing image URL
         }
 
         const updatedPost = await BlogPost.findOneAndUpdate(query, { $set: updateData }, { new: true, runValidators: true });
         res.status(200).json({ success: true, message: 'Blog post updated successfully.', data: updatedPost });
     } catch (error) {
+        // If an error occurs during update, clean up locally uploaded file and Cloudinary image if uploaded
+        if (req.file && req.file.path) {
+            deleteLocalFile(req.file.path);
+        }
+        if (uploadedCloudinaryUrl) {
+            await deleteImageFromCloudinary(uploadedCloudinaryUrl); // Rollback Cloudinary upload
+        }
         handleError(res, error);
     }
 });
@@ -190,7 +263,10 @@ router.delete('/:identifier', auth, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Blog post not found for deletion.' });
         }
 
-        deleteImageFile(deletedPost.mainImage);
+        // Delete associated image from Cloudinary
+        if (deletedPost.mainImage) {
+            await deleteImageFromCloudinary(deletedPost.mainImage);
+        }
 
         res.status(200).json({ success: true, message: 'Blog post deleted successfully.', data: {} });
     } catch (error) {
@@ -198,16 +274,31 @@ router.delete('/:identifier', auth, async (req, res) => {
     }
 });
 
-// Upload editor image (protected)
-router.post('/upload-editor-image', auth, upload.single('editorImage'), (req, res) => {
+// Upload editor image (protected) - This assumes the editor sends an image with field name 'editorImage'
+router.post('/upload-editor-image', auth, upload.single('editorImage'), async (req, res) => {
+    let uploadedCloudinaryUrl = null; // To keep track for cleanup
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No image file provided for editor.' });
         }
-        console.log('Editor image uploaded:', req.file.filename);
-        const imageUrl = `/uploads/${BLOG_IMAGES_SUBDIR}/${req.file.filename}`;
-        res.status(200).json({ success: true, message: 'Editor image uploaded successfully.', data: { imageUrl } });
+
+        console.log('Uploading editor image to Cloudinary from local path:', req.file.path);
+        const cloudinaryUploadResult = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'blog_editor_images' // Separate folder for editor images
+        });
+        uploadedCloudinaryUrl = cloudinaryUploadResult.secure_url;
+        console.log('Editor image uploaded to Cloudinary, URL stored:', uploadedCloudinaryUrl);
+        deleteLocalFile(req.file.path); // Clean up local temporary file after successful upload
+
+        res.status(200).json({ success: true, message: 'Editor image uploaded successfully.', data: { imageUrl: uploadedCloudinaryUrl } });
     } catch (error) {
+        // If an error occurs, clean up locally uploaded file and Cloudinary image if uploaded
+        if (req.file && req.file.path) {
+            deleteLocalFile(req.file.path);
+        }
+        if (uploadedCloudinaryUrl) {
+            await deleteImageFromCloudinary(uploadedCloudinaryUrl); // Rollback Cloudinary upload
+        }
         handleError(res, error);
     }
 });

@@ -34,7 +34,7 @@ const BlogForm = ({ initialData, onSubmit, isEditing = false }) => {
                     uid: '-1', // Static UID for existing image
                     name: initialData.mainImage.split('/').pop(), // Get filename
                     status: 'done',
-                    url: `${API_BASE_URL}/uploads/${initialData.mainImage}`, // Full URL for display
+                    url: `${initialData.mainImage}`, // Full URL for display
                 }]);
             } else {
                 setCurrentMainImageRelativePath(null);
@@ -150,7 +150,7 @@ const BlogForm = ({ initialData, onSubmit, isEditing = false }) => {
                                         <Text type="secondary">Current: {currentMainImageRelativePath.split('/').pop()}</Text>
                                         <AntImage
                                             width={100}
-                                            src={`${API_BASE_URL}/uploads/${currentMainImageRelativePath}`}
+                                            src={`${currentMainImageRelativePath}`}
                                             alt="Current main"
                                             style={{ borderRadius: '4px', display: 'block', marginTop: '4px' }}
                                         />

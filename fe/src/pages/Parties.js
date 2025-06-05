@@ -72,7 +72,7 @@ const Parties = () => {
             title={section.title}
             paragraphs={section.paragraphs}
             images={section.images.map((img) => ({
-              src: `${BACKEND_URL}${img}`,
+              src: `${img}`,
             }))}
             reverse={section.reverse}
           />

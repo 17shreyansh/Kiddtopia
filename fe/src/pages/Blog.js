@@ -48,7 +48,7 @@ const Blog = () => {
         return <div style={{ textAlign: 'center', fontFamily: 'Outfit' }}>Blog not found.</div>;
     }
 
-    const imageUrl = blog.mainImage ? `${backendUrl}/uploads/${blog.mainImage}` : image;
+    const imageUrl = blog.mainImage ? `${blog.mainImage}` : image;
 
     return (
         <>

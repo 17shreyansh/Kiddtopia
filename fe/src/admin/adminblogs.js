@@ -54,10 +54,10 @@ const AdminBlogListPage = () => {
                     <AntImage
                         width={80}
                         height={50}
-                        src={`${API_BASE_URL}/uploads/${imagePath}`} // Constructs http://localhost:5001/uploads/blogs/filename.jpg
+                        src={`${imagePath}`} // Constructs http://localhost:5001/uploads/blogs/filename.jpg
                         alt="Post image"
                         style={{ objectFit: 'cover', borderRadius: '4px' }}
-                        preview={{ src: `${API_BASE_URL}/uploads/${imagePath}` }}
+                        preview={{ src: `${imagePath}` }}
                         onError={(e) => { 
                             const parent = e.target.parentNode;
                             if (parent) parent.innerHTML = `<div style="width: 80px; height: 50px; background: rgb(240, 240, 240); display: flex; align-items: center; justify-content: center; border-radius: 4px; color: rgb(170, 170, 170); font-size: 12px;">Error</div>`;

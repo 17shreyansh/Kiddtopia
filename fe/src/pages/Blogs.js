@@ -106,7 +106,7 @@ const Blog = () => {
                     const formattedBlogs = response.data.data.map(blog => ({
                         ...blog,
                         date: new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-                        imageUrl: blog.mainImage ? `${backendUrl}/uploads/${blog.mainImage}` : null,
+                        imageUrl: blog.mainImage ? `${blog.mainImage}` : null,
                     }));
                     setBlogs(formattedBlogs);
                 } else {

@@ -1,29 +1,26 @@
+// routes/partyPageRoutes.js
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('cloudinary').v2; // Make sure to import cloudinary
 const Party = require('../models/Party');
 const auth = require('../middleware/authMiddleware');
 
 
 const router = express.Router();
 
-// Configure multer for file storage
+// Configure multer for temporary file storage before uploading to Cloudinary
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../Uploads/parties');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const tempUploadDir = 'temp-uploads'; // This should be the same as in your server.js
+    if (!fs.existsSync(tempUploadDir)) {
+      fs.mkdirSync(tempUploadDir, { recursive: true });
     }
-    cb(null, uploadDir);
+    cb(null, tempUploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-     
-
-
- const ext = path.extname(file.originalname);
-    cb(null, `image-${uniqueSuffix}${ext}`);
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
@@ -41,6 +38,25 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
+// Helper function to upload an image to Cloudinary
+const uploadToCloudinary = async (filePath) => {
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: "kiddtopia_parties", // A dedicated folder for party images on Cloudinary
+      unique_filename: true,
+      overwrite: false,
+    });
+    fs.unlinkSync(filePath); // Delete the temporary file after successful upload
+    return result.secure_url;
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath); // Ensure temp file is deleted even on error
+    }
+    throw new Error('Image upload to Cloudinary failed.');
+  }
+};
+
 // GET - Fetch all parties data
 router.get('/', async (req, res) => {
   try {
@@ -53,7 +69,7 @@ router.get('/', async (req, res) => {
           paragraphs: [
             "Celebrate your child's special day at Kiddtopia, where fun meets adventure! Our vibrant indoor play center offers a perfect blend of entertainment for all ages. With thrilling soft play areas, exciting VR games, and a variety of arcade games, Kiddtopia promises an unforgettable birthday experience for your little one and their friends. Our party packages include themed decorations, dedicated party hosts, and customized multi-cuisine menus to delight both kids and adults. Whether it's racing in the Go-Karts, bouncing around the play zones, or diving into immersive VR worlds, Kiddtopia is the ultimate birthday destination that guarantees fun-filled memories.",
           ],
-          images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          images: Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/placeholder_party_1.jpg'), // <<-- UPDATE THIS
           reverse: false,
         },
         {
@@ -61,7 +77,7 @@ router.get('/', async (req, res) => {
           paragraphs: [
             'Looking for a unique, fun-filled venue to host your next Kitty Party? Kiddtopia offers the perfect mix of entertainment, food, and relaxation for an unforgettable experience. Whether it’s a casual gathering with friends or a themed event, our vibrant and lively atmosphere makes every Kitty Party one to remember.',
           ],
-          images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          images: Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/placeholder_party_2.jpg'), // <<-- UPDATE THIS
           reverse: true,
         },
         {
@@ -69,7 +85,7 @@ router.get('/', async (req, res) => {
           paragraphs: [
             'Looking for a fun and dynamic venue to host your next corporate event? Kiddtopia is the perfect spot to combine business with entertainment, offering a refreshing break from the usual boardroom setting. Whether it’s team-building activities, company celebrations, or client appreciation events, our venue provides a unique environment that fosters creativity, collaboration, and fun.',
           ],
-          images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          images: Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/placeholder_party_3.jpg'), // <<-- UPDATE THIS
           reverse: false,
         },
         {
@@ -77,7 +93,7 @@ router.get('/', async (req, res) => {
           paragraphs: [
             'Make a splash at Kiddtopia’s Poolside with an exciting and refreshing Pool Party experience! Whether you’re celebrating a birthday, hosting a summer get-together, or just looking for a reason to have fun with friends, our poolside parties offer the perfect combination of sun, fun, and relaxation.',
           ],
-          images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          images: Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/placeholder_party_4.jpg'), // <<-- UPDATE THIS
           reverse: true,
         },
         {
@@ -85,7 +101,7 @@ router.get('/', async (req, res) => {
           paragraphs: [
             'Bring your celebration outdoors and enjoy the beauty of nature with a delightful Lawn Party at Kiddtopia! Our expansive and lush lawn area is the perfect setting for any occasion, offering a blend of fun, relaxation, and the beauty of the great outdoors.',
           ],
-          images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          images: Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/placeholder_party_5.jpg'), // <<-- UPDATE THIS
           reverse: false,
         },
       ];
@@ -94,15 +110,18 @@ router.get('/', async (req, res) => {
         mainHeading: 'Celebrate Every Special Moment at Kiddtopia',
         sections: defaultSections,
       });
+      await partyData.save(); // Save the default data if it doesn't exist
     } else {
-      // Clean up invalid images
+      // Clean up invalid images or set to a Cloudinary placeholder
       partyData.sections = partyData.sections.map((section) => ({
         ...section,
         images: Array.isArray(section.images)
           ? section.images.map((img) =>
-              typeof img === 'string' ? img : '/Uploads/parties/placeholder.jpg'
+              typeof img === 'string' && img.startsWith('http') // Check if it's a valid URL (assuming Cloudinary URLs start with http)
+                ? img
+                : 'https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg' // <<-- UPDATE THIS
             )
-          : Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          : Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg'), // <<-- UPDATE THIS
       }));
       await partyData.save();
     }
@@ -115,7 +134,7 @@ router.get('/', async (req, res) => {
 });
 
 // PUT - Update main heading
-router.put('/heading',auth, async (req, res) => {
+router.put('/heading', auth, async (req, res) => {
   try {
     const { mainHeading } = req.body;
 
@@ -129,14 +148,16 @@ router.put('/heading',auth, async (req, res) => {
       partyData = new Party({ mainHeading, sections: [] });
     } else {
       partyData.mainHeading = mainHeading;
-      // Clean up invalid images
+      // Clean up invalid images or set to a Cloudinary placeholder
       partyData.sections = partyData.sections.map((section) => ({
         ...section,
         images: Array.isArray(section.images)
           ? section.images.map((img) =>
-              typeof img === 'string' ? img : '/Uploads/parties/placeholder.jpg'
+              typeof img === 'string' && img.startsWith('http')
+                ? img
+                : 'https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg' // <<-- UPDATE THIS
             )
-          : Array(5).fill('/Uploads/parties/placeholder.jpg'),
+          : Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg'), // <<-- UPDATE THIS
       }));
     }
 
@@ -149,7 +170,7 @@ router.put('/heading',auth, async (req, res) => {
 });
 
 // POST - Add a new section
-router.post('/section',auth, async (req, res) => {
+router.post('/section', auth, async (req, res) => {
   try {
     const { title, paragraphs, images, reverse } = req.body;
 
@@ -161,8 +182,8 @@ router.post('/section',auth, async (req, res) => {
       title,
       paragraphs,
       images: Array.isArray(images)
-        ? images.map((img) => (typeof img === 'string' ? img : '/Uploads/parties/placeholder.jpg'))
-        : Array(5).fill('/Uploads/parties/placeholder.jpg'),
+        ? images.map((img) => (typeof img === 'string' && img.startsWith('http') ? img : 'https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg')) // <<-- UPDATE THIS
+        : Array(5).fill('https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg'), // <<-- UPDATE THIS
       reverse: reverse !== undefined ? reverse : false,
     };
 
@@ -186,7 +207,7 @@ router.post('/section',auth, async (req, res) => {
 });
 
 // PUT - Update a specific section
-router.put('/section/:index',auth, async (req, res) => {
+router.put('/section/:index', auth, async (req, res) => {
   try {
     const { index } = req.params;
     const { title, paragraphs, images, reverse } = req.body;
@@ -209,7 +230,7 @@ router.put('/section/:index',auth, async (req, res) => {
       title: title || partyData.sections[sectionIndex].title,
       paragraphs: paragraphs || partyData.sections[sectionIndex].paragraphs,
       images: Array.isArray(images)
-        ? images.map((img) => (typeof img === 'string' ? img : '/Uploads/parties/placeholder.jpg'))
+        ? images.map((img) => (typeof img === 'string' && img.startsWith('http') ? img : 'https://res.cloudinary.com/<YOUR_CLOUD_NAME>/image/upload/v1700000000/kiddtopia_placeholders/default_placeholder.jpg')) // <<-- UPDATE THIS
         : partyData.sections[sectionIndex].images,
       reverse: reverse !== undefined ? reverse : partyData.sections[sectionIndex].reverse,
     };
@@ -223,7 +244,7 @@ router.put('/section/:index',auth, async (req, res) => {
 });
 
 // DELETE - Remove a section
-router.delete('/section/:index',auth, async (req, res) => {
+router.delete('/section/:index', auth, async (req, res) => {
   try {
     const { index } = req.params;
 
@@ -250,8 +271,8 @@ router.delete('/section/:index',auth, async (req, res) => {
   }
 });
 
-// POST - Upload images
-router.post('/upload',auth, upload.array('images', 5), async (req, res) => {
+// POST - Upload images to Cloudinary (specific to party page sections)
+router.post('/upload', auth, upload.array('images', 5), async (req, res) => {
   try {
     const files = req.files;
 
@@ -259,16 +280,20 @@ router.post('/upload',auth, upload.array('images', 5), async (req, res) => {
       return res.status(400).json({ message: 'No files uploaded' });
     }
 
-    const imagePaths = files.map((file) => `/Uploads/parties/${path.basename(file.path)}`);
+    const imagePaths = [];
+    for (const file of files) {
+      const url = await uploadToCloudinary(file.path);
+      imagePaths.push(url);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Files uploaded successfully',
-      imagePaths, // Returns ['/Uploads/parties/filename.jpg', ...]
+      message: 'Files uploaded successfully to Cloudinary',
+      imagePaths, // Returns an array of Cloudinary URLs
     });
   } catch (error) {
     console.error('Error uploading files:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 

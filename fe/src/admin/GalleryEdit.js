@@ -137,7 +137,7 @@ const AdminPage = () => {
                       <div style={{ height: 200, overflow: 'hidden' }}>
                         <img
                           alt={item.title}
-                          src={`${API_URL}${item.image}`}
+                          src={`${item.image}`}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
@@ -213,7 +213,7 @@ const AdminPage = () => {
                   <Text strong>Current Image:</Text>
                   <div style={{ marginTop: 8 }}>
                     <img
-                      src={`${API_URL}${currentItem.image}`}
+                      src={`${currentItem.image}`}
                       alt={currentItem.title}
                       style={{ maxWidth: '100%', maxHeight: 200 }}
                     />

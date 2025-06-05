@@ -147,7 +147,8 @@ const PartiesAdmin = () => {
       const newSection = {
         title: 'New Section Title',
         paragraphs: ['Add your content here'],
-        images: Array(5).fill('/Uploads/parties/placeholder.jpg'),
+        // Updated placeholder to a generic image URL (or a Cloudinary placeholder)
+        images: Array(5).fill('https://via.placeholder.com/600x400/CCCCCC/FFFFFF?text=Placeholder+Image'),
         reverse: false,
       };
 
@@ -211,7 +212,7 @@ const PartiesAdmin = () => {
 
   const handleImageUpload = async ({ file, onSuccess, onError }) => {
     const formData = new FormData();
-    formData.append('images', file);
+    formData.append('images', file); // 'images' matches the field name in your backend multer setup
 
     try {
       const response = await axios.post(
@@ -224,8 +225,9 @@ const PartiesAdmin = () => {
           },
         }
       );
+      // The backend now returns Cloudinary URLs in imagePaths
       onSuccess(response.data);
-      message.success('Image uploaded successfully');
+      message.success('Image uploaded successfully to Cloudinary');
     } catch (error) {
       console.error('Error uploading image:', error);
       message.error('Failed to upload image');
@@ -236,7 +238,7 @@ const PartiesAdmin = () => {
   const CustomImageUpload = ({ value, onChange, index, imageIndex }) => {
     const handleChange = async (info) => {
       if (info.file.status === 'done') {
-        const imagePath = info.file.response.imagePaths[0]; // Expecting a string
+        const imagePath = info.file.response.imagePaths[0]; // This will be the Cloudinary URL
 
         setPartyData((prev) => ({
           ...prev,
@@ -258,10 +260,11 @@ const PartiesAdmin = () => {
       }
     };
 
+    // The imageSrc will now directly be the Cloudinary URL or a placeholder
     const imageSrc =
       value ||
       (partyData.sections[index]?.images?.[imageIndex]) ||
-      '/Uploads/parties/placeholder.jpg';
+      'https://via.placeholder.com/600x400/CCCCCC/FFFFFF?text=Placeholder+Image'; // Generic placeholder URL
 
     return (
       <Upload
@@ -274,7 +277,8 @@ const PartiesAdmin = () => {
       >
         {imageSrc ? (
           <img
-            src={`${BACKEND_URL}${imageSrc}`}
+            // No need for BACKEND_URL prefix anymore, as imageSrc is a full URL
+            src={imageSrc}
             alt={`Section ${index + 1} Image ${imageIndex + 1}`}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
