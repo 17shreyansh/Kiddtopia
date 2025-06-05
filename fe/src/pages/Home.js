@@ -27,7 +27,7 @@ const Home = () => {
       if (res.data.success && res.data.content) {
         const paragraphs = res.data.content.paragraphs || [];
         const images = (res.data.content.images || []).map((imgName, idx) => ({
-          src: `${process.env.REACT_APP_BACKEND_URL}/uploads/${imgName}`,
+          src: `${imgName}`,
         }));
         setAboutData({ paragraphs, images });
       }
@@ -50,9 +50,9 @@ const Home = () => {
         align="left"
       />
 
-      <ServicesComponent />
+      <ServicesComponent /> 
       <BookPartyForm />
-      <WhyChooseUs />
+      <WhyChooseUs /> /
       <KiddtopiaComponent />
       <FranchiseOpportunity />
       <Gallery />

@@ -90,7 +90,7 @@ const Gallery = () => {
               }}
             >
               <img
-                src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${img}`}
+                src={`${img}`}
                 alt={`gallery-${idx}`}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />

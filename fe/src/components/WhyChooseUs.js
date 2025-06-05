@@ -62,7 +62,7 @@ const WhyChooseUs = () => {
                 variants={itemVariants(rotations[index] || 0)}
               >
                 <img
-                  src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${img}`}
+                  src={`${img}`}
                   alt={`why-${index + 1}`}
                   className={`why-image${index + 1}`}
                   style={{ width: '100%' }}
